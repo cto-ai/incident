@@ -1,0 +1,19 @@
+version: "1"
+commands:
+  - name: incident:1.0.0
+    description: Incident.sh - An Op to create and manage your incidents
+    public: false
+    sourceCodeURL: "https://github.com/cto-ai/Incident"
+    run: node /ops/index.js
+    mountCwd: false
+    mountHome: true
+    help:
+      usage: "ops run incident [-l | -s | -c | -u | -o]"
+      arguments:
+        none: ""
+      options:
+        list: 'List GitLab issues'
+        search: 'Search for PagerDuty incidents'
+        create: 'Create a PagerDuty incident'
+        update: 'Update a PagerDuty incident'
+        onCall: 'List users on call'
