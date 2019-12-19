@@ -10,9 +10,9 @@ Find information about how to run and build Ops via the [Ops Platform Documentat
 
 This Op requires credentials based on which services you integrate with:
 
-- **Gitlab Access Token**
-- **PagerDuty API key**
-- **Slack WebHook URL**
+- **Gitlab Access Token -** [Creating Github Personal Access Tokens](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
+- **PagerDuty API key -** [Getting PagerDuty API Key](https://support.pagerduty.com/docs/generating-api-keys)
+- **Slack WebHook URL -** [Adding Slack Webhooks Guide](https://slack.com/intl/en-ca/help/articles/115005265063-Incoming-WebHooks-for-Slack)
 
 ## Usage
 

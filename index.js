@@ -12,10 +12,10 @@ const { retrieveAuth, getFlags, getInitialJob } = require('./utils/helpers')
 
 // Map our job names to their functions
 const jobs = {
-  'Create an incident': createIncident,
-  'Update an incident': updateIncident,
-  'List issues': listIssues,
-  'Search for incidents': searchIncidents,
+  'Create an Incident': createIncident,
+  'Update an Incident': updateIncident,
+  'List Issues': listIssues,
+  'Search for Incidents': searchIncidents,
   'List On-Call': whoOnCall,
 }
 
