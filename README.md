@@ -4,9 +4,9 @@ An Op to simplify incident management.
 
 ## Requirements
 
-To run this or any other Op, install the [Ops Platform](https//cto.ai/platform).
+To run this or any other Op, install the [Ops Platform](https://cto.ai/platform).
 
-Find information about how to run and build Ops via the [Ops Platform Documentation](https//cto.ai/docs/overview).
+Find information about how to run and build Ops via the [Ops Platform Documentation](https://cto.ai/docs/overview).
 
 This Op requires credentials based on which services you integrate with:
 
