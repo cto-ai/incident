@@ -7,14 +7,14 @@ const newRunPrompts = [
   {
     type: 'input',
     name: 'gitlabToken',
-    message: `Please input your Gitlab Access Token ${reset.green(
+    message: `Please input your GitLab Access Token ${reset.green(
      '→',
     )}`,
   },
   {
     type: 'input',
     name: 'projectId',
-    message: `Please input your Gitlab Project Id ${reset.green(
+    message: `Please input your GitLab Project Id ${reset.green(
      '→',
     )}`,
   },
@@ -38,7 +38,7 @@ const useOldAuthPrompt = [
   {
     type: 'confirm',
     name: 'useOld',
-    message: `Would you like to use your previously entered Gitlab, Slack, and PagerDuty configuration? ${reset.green(
+    message: `Would you like to use your previously entered GitLab, Slack, and PagerDuty configuration? ${reset.green(
      '→',
     )}`,
   },
