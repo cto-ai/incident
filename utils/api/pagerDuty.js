@@ -3,7 +3,8 @@ const pagerDuty = require('node-pagerduty')
 
 // PagerDuty config variables
 let pd // Main API instance
-const qs = { // Default query string
+const qs = {
+  // Default query string
   time_zone: 'UTC',
 }
 
@@ -39,7 +40,7 @@ async function matchUser(opUserEmail, userList) {
   const users = userList ? userList : await getUsers()
   return users.reduce((acc, user) => {
     if (user.email === opUserEmail) {
-      return [ ...acc, user ]
+      return [...acc, user]
     }
     return acc
   }, [])
@@ -89,9 +90,11 @@ async function getServices() {
  */
 async function newIncident(user, payload, userList) {
   const { me } = user
-  const opUserEmail = me.email;
+  const opUserEmail = me.email
   const from = await matchUser(opUserEmail, userList)
-  const incident = await pd.incidents.createIncident(from[0].email, payload)
+  const {
+    body: { incident },
+  } = await pd.incidents.createIncident(from[0].email, payload)
   return incident
 }
 
@@ -121,10 +124,7 @@ async function getOnCall() {
 
     // Add the user to their escalation policy
     if (sorted[policyName]) {
-      sorted[policyName] = [
-        ...sorted[policyName],
-        user
-      ]
+      sorted[policyName] = [...sorted[policyName], user]
     } else {
       sorted[policyName] = [user]
     }
@@ -140,7 +140,7 @@ async function getOnCall() {
   })
   ux.spinner.stop('Done!\n')
 
-  return sorted;
+  return sorted
 }
 
 /**
@@ -196,7 +196,6 @@ async function addNote(id, from, payload) {
     throw err
   }
 }
-
 
 /**
  * snoozeIncident snoozes an incident for a number of seconds.
