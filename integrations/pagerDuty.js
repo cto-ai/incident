@@ -26,13 +26,9 @@ const sendSlackMessage = require('../utils/api/slack')
  */
 async function createIncident(authData, user) {
   // Get incident info from the user
-  let {
-    description,
-    impact,
-    started_at,
-    status,
-    message,
-  } = await ux.prompt(incidentStartPrompts)
+  let { description, impact, started_at, status, message } = await ux.prompt(
+    incidentStartPrompts
+  )
 
   // Create our timestamps
   const ts = moment().unix()
@@ -51,17 +47,12 @@ async function createIncident(authData, user) {
       {
         status,
         message,
-        ts: updated_at
-      }
-    ]
+        ts: updated_at,
+      },
+    ],
   }
 
-  const {
-    gitlabToken,
-    projectId,
-    slackWebHook,
-    pagerDutyKey
-  } = authData
+  const { gitlabToken, projectId, slackWebHook, pagerDutyKey } = authData
 
   try {
     // Prompt for which integrations we should activate for this incident
@@ -86,9 +77,11 @@ async function createIncident(authData, user) {
         // Create a name -> id object map for good natural language prompts
         // to the user
         const policyChoices = {}
-        policies.map(policy => policyChoices[policy.name] = policy.id)
+        policies.map(policy => (policyChoices[policy.name] = policy.id))
         // Get user to select an escalation policy
-        const answer = await ux.prompt(escalationPolicyPrompt(Object.keys(policyChoices)))
+        const answer = await ux.prompt(
+          escalationPolicyPrompt(Object.keys(policyChoices))
+        )
         // Pull the policy id from its name
         escalationPolicy = policyChoices[answer.escalationPolicy]
       }
@@ -96,32 +89,36 @@ async function createIncident(authData, user) {
       // Prompt the user for which service to create the incident for
       const services = await pagerDuty.getServices()
       const serviceChoices = {}
-      services.map(service => serviceChoices[service.name] = service.id)
-      const { service } = await ux.prompt(servicePrompt(Object.keys(serviceChoices)))
+      services.map(service => (serviceChoices[service.name] = service.id))
+      const { service } = await ux.prompt(
+        servicePrompt(Object.keys(serviceChoices))
+      )
       const serviceId = serviceChoices[service]
 
-      ux.spinner.start("Creating PagerDuty incident")
+      ux.spinner.start('Creating PagerDuty incident')
       // Create the PagerDuty incident
       const incident = await pagerDuty.newIncident(user, {
         incident: {
           title: description,
           escalation_policy: {
             id: escalationPolicy,
-            type: "escalation_policy_reference",
+            type: 'escalation_policy_reference',
           },
           service: {
             id: serviceId,
-            type: "service_reference",
+            type: 'service_reference',
           },
           body: {
-            type: "incident_body",
+            type: 'incident_body',
             details: `${message}\n Started at: ${started_at}\n Impact: ${impact}\n Status: ${status}`,
           },
           urgency: getUrgency(impact),
-        }
+        },
       })
-      ux.spinner.start("Done!")
-      sdk.log(ux.colors.blue(`You can see you incident at ${incident.html_url}`))
+      ux.spinner.start('Done!')
+      sdk.log(
+        ux.colors.blue(`You can see you incident at ${incident.html_url}`)
+      )
     }
   } catch (err) {
     console.error(err)
@@ -150,7 +147,7 @@ async function searchIncidents(authData, user) {
 
   // Nothing found; return early
   if (!incidents.length) {
-    sdk.log(ux.colors.blue("No incidents found!"))
+    sdk.log(ux.colors.blue('No incidents found!'))
     return incidents
   }
 
@@ -192,7 +189,11 @@ async function whoOnCall(authData, user) {
   // Pretty print the on call users for each policy
   const onCalls = await pagerDuty.getOnCall()
   Object.keys(onCalls).map(policy => {
-    sdk.log(ux.colors.magenta(`The following people are on call for the '${policy}' policy:\n\n`))
+    sdk.log(
+      ux.colors.magenta(
+        `The following people are on call for the '${policy}' policy:\n\n`
+      )
+    )
     onCalls[policy].map(person => {
       sdk.log(`\t${person.name}:`)
       sdk.log(`\t\tID: ${person.id}`)
@@ -223,30 +224,35 @@ async function updateIncident(authData, user) {
     choicesMap[incident.title] = incident.id
   })
   const choices = Object.keys(choicesMap)
+  if (!choices.length) {
+    sdk.log('There are no incidents available to be updated!')
+    return
+  }
 
   // Get user to select an incident/update type and setup config values
   const { selected } = await ux.prompt(updateSelectPrompt(choices))
   const incidentId = choicesMap[selected]
   const { updateType } = await ux.prompt(howUpdatePrompt)
-  const { me: { email } } = user
+  const {
+    me: { email },
+  } = user
 
   switch (updateType) {
     case 'Resolve this incident':
       resolveIncident(incidentId, email)
-      break;
+      break
     case 'Escalate this incident':
       escalateIncident(incidentId, email)
-      break;
+      break
     case 'Add a note':
       addNote(incidentId, email)
-      break;
+      break
     case 'Snooze this incident':
       snoozeIncident(incidentId, email)
-      break;
+      break
     default:
       sdk.log(ux.colors.red('Invalid option selected!'))
   }
-
 }
 
 /**
@@ -257,10 +263,10 @@ async function updateIncident(authData, user) {
  */
 async function resolveIncident(incidentId, email) {
   const resolvePayload = {
-    "incident": {
-      "type": "incident_reference",
-      "status": "resolved"
-    }
+    incident: {
+      type: 'incident_reference',
+      status: 'resolved',
+    },
   }
 
   ux.spinner.start(`Resolving incident ${incidentId}`)
@@ -277,10 +283,10 @@ async function resolveIncident(incidentId, email) {
 async function escalateIncident(incidentId, email) {
   const { level } = await ux.prompt(escalatePrompt)
   const escalatePayload = {
-    "incident": {
-      "type": "incident_reference",
-      "escalation_level": level,
-    }
+    incident: {
+      type: 'incident_reference',
+      escalation_level: level,
+    },
   }
 
   ux.spinner.start(`Escalating incident ${incidentId} to level ${level}`)
@@ -297,9 +303,9 @@ async function escalateIncident(incidentId, email) {
 async function addNote(incidentId, email) {
   const { content } = await ux.prompt(noteContentsPrompt)
   const notePayload = {
-    "note": {
-      content
-    }
+    note: {
+      content,
+    },
   }
 
   ux.spinner.start(`Adding note to incident ${incidentId}`)
@@ -315,7 +321,9 @@ async function addNote(incidentId, email) {
  */
 async function snoozeIncident(incidentId, email) {
   const { snoozeDuration } = await ux.prompt(snoozeDurationPrompt)
-  const duration = Math.abs((new Date(snoozeDuration).getTime() - new Date().getTime()) / 1000)
+  const duration = Math.abs(
+    (new Date(snoozeDuration).getTime() - new Date().getTime()) / 1000
+  )
 
   ux.spinner.start(`Snoozing incident ${incidentId}`)
   await pagerDuty.snoozeIncident(incidentId, email, { duration })

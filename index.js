@@ -73,6 +73,7 @@ async function main() {
  * @param {object} user     The current SDK user
  */
 async function runJob(job, authData, user) {
+  console.log(jobs)
   await jobs[job](authData, user)
 }
 
