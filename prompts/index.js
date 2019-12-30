@@ -1,5 +1,5 @@
 const { ux } = require('@cto.ai/sdk')
-const { white, reset } = ux.colors
+const { secondary, reset } = ux.colors
 
 const newRunPrompts = [
   {
@@ -49,7 +49,15 @@ const incidentStartPrompts = [
   {
     type: 'input',
     name: 'description',
-    message: '\n⚠️  Please describe the incident:',
+    message: `\n⚠️  Please describe the incident: ${secondary(
+      '(Maximum 255 characters)'
+    )}`,
+    validate: input => {
+      if (input.length < 255) {
+        return true
+      }
+      return 'There is a 255 character limit!'
+    },
   },
   {
     type: 'list',
