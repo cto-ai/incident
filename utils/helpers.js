@@ -1,17 +1,23 @@
-const { ux } = require('@cto.ai/sdk');
-const path = require('path');
-const fs = require('fs');
-const { useOldAuthPrompt, newRunPrompts } = require('../prompts');
+const { ux } = require('@cto.ai/sdk')
+const path = require('path')
+const fs = require('fs')
+const { useOldAuthPrompt, newRunPrompts } = require('../prompts')
 
-const OP_CONFIG = '/root/.config/@cto.ai/ops/platform-solutions/incident/config';
+const OP_CONFIG = '/root/.config/@cto.ai/ops/platform-solutions/incident/config'
 const validFlags = [
-  '-l', '--list',
-  '-s', '--search',
-  '-c', '--create',
-  '-u', '--update',
-  '-o', '--onCall',
+  '-l',
+  '--list',
+  '-s',
+  '--search',
+  '-c',
+  '--create',
+  '-u',
+  '--update',
+  '-o',
+  '--onCall',
   '--build',
-  '-h', '--help',
+  '-h',
+  '--help',
 ]
 
 /**
@@ -22,7 +28,8 @@ const validFlags = [
 function getInitialJob() {
   // Process passed arguments
   const argv = process.argv
-  const flags = argv && argv.length ? argv.filter(arg => arg.startsWith('-')) : []
+  const flags =
+    argv && argv.length ? argv.filter(arg => arg.startsWith('-')) : []
 
   // Validate the passed flags
   flags.map(f => {
@@ -59,11 +66,7 @@ function getInitialJob() {
  * @param {string}        fileName The name of the file to write to
  * @param {string|Buffer} data The data to write
  */
-function writeToFileSync({
-  dirPath,
-  fileName,
-  data,
-}) {
+function writeToFileSync({ dirPath, fileName, data }) {
   try {
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true })
@@ -114,7 +117,6 @@ async function retrieveAuth(initialSelected) {
     return authData
   }
 
-
   if (!Object.keys(authData).length) {
     authData = await promptForAuth()
   }
@@ -146,4 +148,4 @@ module.exports = {
   writeToFileSync,
   retrieveAuth,
   getUrgency,
-};
+}

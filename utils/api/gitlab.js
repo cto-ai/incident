@@ -1,7 +1,7 @@
-const { ux } = require('@cto.ai/sdk');
-const moment = require('moment');
-require('moment-timezone');
-const { Gitlab } = require('gitlab');
+const { ux } = require('@cto.ai/sdk')
+const moment = require('moment')
+require('moment-timezone')
+const { Gitlab } = require('gitlab')
 
 /**
  * createGitlabIssue consolidates user info into a new GitLab issue.
@@ -15,31 +15,29 @@ async function createGitlabIssue(token, projectId, summary) {
   ux.spinner.start(`Creating GitLab Issue in Project ${projectId}`)
   const api = new Gitlab({
     host: 'https://git.cto.ai',
-    token
-  });
+    token,
+  })
 
-  let description = `# Start Time \n ${summary.started_at} \n # Impact \n ${
-    summary.impact
-  } \n # Timeline \n`;
+  let description = `# Start Time \n ${summary.started_at} \n # Impact \n ${summary.impact} \n # Timeline \n`
   summary.timeline.map(timeline => {
     const ts = moment(timeline.ts)
       .tz(moment.tz.guess())
-      .format('h:MM A z on dddd, MMMM D, YYYY');
+      .format('h:MM A z on dddd, MMMM D, YYYY')
     description = description.concat(
       `### ${timeline.status} : ${ts}\n - ${timeline.message}\n`
-    );
-  });
+    )
+  })
 
   try {
     const issue = await api.Issues.create(projectId, {
       title: summary.description,
       description,
-      labels: 'incident.sh'
+      labels: 'incident.sh',
     })
-    ux.spinner.stop("Done!")
+    ux.spinner.stop('Done!')
     return issue.web_url
   } catch (err) {
-    ux.spinner.stop("ERROR!")
+    ux.spinner.stop('ERROR!')
     throw err
   }
 }
@@ -55,13 +53,13 @@ async function createGitlabIssue(token, projectId, summary) {
 async function gitIssues(token, projectId) {
   const api = new Gitlab({
     host: 'https://git.cto.ai',
-    token
-  });
+    token,
+  })
   const results = await api.Issues.all({
     projectId,
     groupId: null,
     scope: 'all',
-    state: 'opened'
+    state: 'opened',
   })
   return results
 }
@@ -69,4 +67,4 @@ async function gitIssues(token, projectId) {
 module.exports = {
   createGitlabIssue,
   gitIssues,
-};
+}

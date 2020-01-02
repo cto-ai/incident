@@ -1,5 +1,5 @@
-const { LOGO } = require('./logo');
+const { LOGO } = require('./logo')
 
 module.exports = {
   LOGO,
-};
+}

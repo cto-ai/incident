@@ -9,16 +9,16 @@ const { gitIssues } = require('../utils/api/gitlab')
 async function listIssues(authData) {
   const { gitlabToken, projectId } = authData
   sdk.log('')
-  ux.spinner.start("Retrieving GitLab issues")
+  ux.spinner.start('Retrieving GitLab issues')
   const issues = await gitIssues(gitlabToken, projectId)
-  ux.spinner.stop("Done!")
+  ux.spinner.stop('Done!')
 
   if (!issues.length) {
-    sdk.log(ux.colors.magenta("\nNo issues found!"))
+    sdk.log(ux.colors.magenta('\nNo issues found!'))
     return
   }
 
-  sdk.log(ux.colors.magenta("\nWe found the following open issues:\n"))
+  sdk.log(ux.colors.magenta('\nWe found the following open issues:\n'))
   issues.map(printIssue)
 }
 
@@ -29,7 +29,12 @@ function printIssue(issue) {
   sdk.log(ux.colors.magenta(`\t${issue.title}`))
   sdk.log(`\t\tID: ${issue.id}`)
   sdk.log(`\t\tState: ${issue.state}`)
-  sdk.log(`\t\tDescription: \n\t\t\t${issue.description.replace(/(?:\r\n|\r|\n)/g, '\n\t\t\t')}`)
+  sdk.log(
+    `\t\tDescription: \n\t\t\t${issue.description.replace(
+      /(?:\r\n|\r|\n)/g,
+      '\n\t\t\t'
+    )}`
+  )
   sdk.log(`\t\tCreated at: ${issue.created_at}`)
   sdk.log(`\t\tUpdated at: ${issue.updated_at}`)
   if (issue.weight) sdk.log(`\t\tWeight: ${issue.weight}`)
