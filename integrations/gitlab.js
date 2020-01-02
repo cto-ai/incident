@@ -42,12 +42,10 @@ function printIssue(issue) {
     issue.labels.forEach(label => (issueStr += `\n\t\t\t${label}`))
   }
   if (issue.assignees.length) {
-    issueStr += `\t\tAssignee(s):`
+    issueStr += `\n\t\tAssignee(s):`
     issue.assignees.forEach(({ name }) => (issueStr += `\n\t\t\t${name}`))
   }
-  issueStr += `\t\tAuthor:
-  \t\t\tName: ${issue.author.name}
-  \t\t\tUsername: ${issue.author.username}`
+  issueStr += `\n\t\tAuthor: ${issue.author.name} - ${issue.author.username}`
   if (issue.due_date) issueStr += `\n\t\tDue date: ${issue.due_date}`
   issueStr += `\n\t\tURL: ${issue.web_url}\n`
   return issueStr

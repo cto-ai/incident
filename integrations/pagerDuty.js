@@ -11,7 +11,7 @@ const {
   howUpdatePrompt,
   noteContentsPrompt,
   snoozeDurationPrompt,
-  searchIncidentsPrompt,
+  getSearchQuery,
   escalatePrompt,
 } = require('../prompts')
 const { getUrgency } = require('../utils/helpers')
@@ -138,7 +138,7 @@ async function searchIncidents(authData) {
   pd.initializePagerDuty(pagerDutyKey)
 
   // Get query information from the user
-  const query = await ux.prompt(searchIncidentsPrompt)
+  const query = await getSearchQuery()
 
   await ux.print('')
   ux.spinner.start('Retrieving incidents')

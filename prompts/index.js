@@ -1,4 +1,6 @@
 const { ux } = require('@cto.ai/sdk')
+const moment = require('moment')
+
 const { secondary, reset } = ux.colors
 
 const newRunPrompts = [
@@ -74,6 +76,7 @@ const incidentStartPrompts = [
     name: 'started_at',
     message: 'When did the incident start',
     format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
+    maximum: new Date(),
   },
   {
     type: 'list',
@@ -195,33 +198,45 @@ const continuePrompts = [
   },
 ]
 
-// Datetime prompt does not currently support formatting of the date @ sdk v2.0.1
-const searchIncidentsPrompt = [
-  {
-    type: 'datetime',
-    name: 'since',
-    message: `What is the start of the date range over which you want to search`,
-    maximum: new Date(),
-  },
-  {
+async function getSearchQuery() {
+  // Datetime prompt does not currently support formatting of the date @ sdk v2.0.1
+  const currentTime = moment().format()
+  const startDatePrompt = {
     type: 'datetime',
     name: 'until',
     message: `What is the end of the date range over which you want to search`,
-    maximum: new Date(),
-  },
-  {
-    type: 'checkbox',
-    name: 'statuses',
-    message: `Which statuses would you like to search for`,
-    choices: ['Triggered', 'Acknowledged', 'Resolved'],
-  },
-  {
-    type: 'checkbox',
-    name: 'urgencies',
-    message: `Which urgencies would you like to search for`,
-    choices: ['High', 'Low'],
-  },
-]
+    maximum: currentTime,
+  }
+  const { until } = await ux.prompt(startDatePrompt)
+  const chosenEndDate = moment(until)
+  // PagerDuty getIncident API returns a bad request when date ranges are longer than 179 days from current time
+  const optionPrompts = [
+    {
+      type: 'datetime',
+      name: 'since',
+      message: `What is the start of the date range over which you want to search`,
+      maximum: chosenEndDate.format(),
+      minimum: chosenEndDate
+        .clone()
+        .subtract(179, 'days')
+        .format(),
+    },
+    {
+      type: 'checkbox',
+      name: 'statuses',
+      message: `Which statuses would you like to search for`,
+      choices: ['Triggered', 'Acknowledged', 'Resolved'],
+    },
+    {
+      type: 'checkbox',
+      name: 'urgencies',
+      message: `Which urgencies would you like to search for`,
+      choices: ['High', 'Low'],
+    },
+  ]
+  const query = await ux.prompt(optionPrompts)
+  return { until, ...query }
+}
 
 const shouldContinuePrompt = [
   {
@@ -261,7 +276,7 @@ module.exports = {
   noteContentsPrompt,
   snoozeDurationPrompt,
   continuePrompts,
-  searchIncidentsPrompt,
+  getSearchQuery,
   shouldContinuePrompt,
   escalatePrompt,
 }

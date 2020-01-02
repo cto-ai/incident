@@ -143,6 +143,21 @@ function getUrgency(priority) {
   return urgencies[priority]
 }
 
+// /**
+//  * validateDates checks the date range entered by the user, and will reprompt user for new date ranges if they are improperly entered
+//  *
+//  * @param {string} start The starting date range chosen by the user
+//  * @param {string} end The ending date range chosen by the user
+//  * @return {object} A valid start and end date range
+//  */
+// async function validateDates(start, end) {
+//   let startMoment = moment(start)
+//   let endMoment = moment(end)
+//   while (startMoment.isAfter(endMoment)) {}
+
+//   return urgencies[priority]
+// }
+
 module.exports = {
   getInitialJob,
   writeToFileSync,
