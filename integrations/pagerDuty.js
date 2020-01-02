@@ -2,6 +2,7 @@ const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 const pd = require('../utils/api/pagerDuty')
 const {
+  incidentTitlePrompt,
   incidentStartPrompts,
   whereToCreatePrompt,
   pagerDutyAssigneePrompt,
@@ -26,9 +27,15 @@ const sendSlackMessage = require('../utils/api/slack')
  */
 async function createIncident(authData, user) {
   // Get incident info from the user
-  let { description, impact, started_at, status, message } = await ux.prompt(
+  let incidentTitle = await ux.prompt(incidentTitlePrompt)
+  while (incidentTitle.description.length > 255) {
+    await ux.print('Incident title must be less than 255 characters!')
+    incidentTitle = await ux.prompt(incidentTitlePrompt)
+  }
+  let { impact, started_at, status, message } = await ux.prompt(
     incidentStartPrompts
   )
+  let { description } = incidentTitle
 
   // Create our timestamps
   const ts = moment().unix()
@@ -289,15 +296,21 @@ async function resolveIncident(incidentId, email) {
  * @param {string} email      The current user's email
  */
 async function escalateIncident(incidentId, email) {
-  const { level } = await ux.prompt(escalatePrompt)
+  let chosenLevel = await ux.prompt(escalatePrompt)
+  while (chosenLevel.level === '' || isNaN(chosenLevel.level)) {
+    await ux.print('Please enter an integer')
+    chosenLevel = await ux.prompt(escalatePrompt)
+  }
   const escalatePayload = {
     incident: {
       type: 'incident_reference',
-      escalation_level: level,
+      escalation_level: chosenLevel.level,
     },
   }
 
-  ux.spinner.start(`Escalating incident ${incidentId} to level ${level}`)
+  ux.spinner.start(
+    `Escalating incident ${incidentId} to level ${chosenLevel.level}`
+  )
   await pd.updateIncident(incidentId, email, escalatePayload)
   ux.spinner.stop('Done!')
 }

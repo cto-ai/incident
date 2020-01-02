@@ -20,14 +20,7 @@ const jobs = {
 }
 
 async function main() {
-  const user = {
-    me: {
-      username: 'tim',
-      email: 'tim@cto.ai',
-    },
-  }
-  const person = user && user.me ? `, ${user.me.username}` : ' there'
-  const greeting = `\n👋  Welcome to Incident.sh  👋\n\nHi${person}!\n`
+  const greeting = `\n👋  Welcome to Incident.sh  👋\n\nHi there!\n`
 
   // Attempt to parse the user's passed flags
   let initialJob
@@ -43,7 +36,7 @@ async function main() {
 
   // Attempt to retrieve previous auth config and prompt the user if they
   // want to use it or enter new details, use old if we have a runtime job
-  const authData = await retrieveAuth(!!initialJob)
+  const { authData, user } = await retrieveAuth(!!initialJob)
 
   // Extract job names from our jobs mapping
   const jobChoices = Object.keys(jobs)

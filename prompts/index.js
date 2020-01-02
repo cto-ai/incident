@@ -26,6 +26,24 @@ const newRunPrompts = [
   },
 ]
 
+const userPrompts = [
+  {
+    type: 'input',
+    name: 'email',
+    message: 'Please enter your email for PagerDuty',
+  },
+  {
+    type: 'input',
+    name: 'firstName',
+    message: 'Please enter your first name',
+  },
+  {
+    type: 'input',
+    name: 'lastName',
+    message: 'Please enter your last name',
+  },
+]
+
 const useOldAuthPrompt = [
   {
     type: 'confirm',
@@ -45,20 +63,15 @@ const whichJobPrompt = choices => {
   ]
 }
 
+const incidentTitlePrompt = {
+  type: 'input',
+  name: 'description',
+  message: `\n⚠️  Please describe the incident: ${secondary(
+    '(Maximum 255 characters)'
+  )}`,
+}
+
 const incidentStartPrompts = [
-  {
-    type: 'input',
-    name: 'description',
-    message: `\n⚠️  Please describe the incident: ${secondary(
-      '(Maximum 255 characters)'
-    )}`,
-    // validate: input => {
-    //   if (input.length < 255) {
-    //     return true
-    //   }
-    //   return 'There is a 255 character limit!'
-    // },
-  },
   {
     type: 'list',
     name: 'impact',
@@ -186,6 +199,7 @@ const snoozeDurationPrompt = [
     name: 'snoozeDuration',
     message: `Until when would you like to snooze this incident`,
     format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
+    minimum: new Date(),
   },
 ]
 
@@ -251,21 +265,15 @@ const escalatePrompt = [
     type: 'input',
     name: 'level',
     message: `Please enter the escalation level to promote this incident to`,
-    // validate: function(input) {
-    //   const regex = /\d+/g
-    //   const match = regex.exec(input)
-    //   if (match) {
-    //     return true
-    //   }
-    //   return 'Please enter an integer'
-    // },
   },
 ]
 
 module.exports = {
   newRunPrompts,
+  userPrompts,
   useOldAuthPrompt,
   whichJobPrompt,
+  incidentTitlePrompt,
   incidentStartPrompts,
   whereToCreatePrompt,
   pagerDutyAssigneePrompt,

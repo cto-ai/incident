@@ -90,6 +90,7 @@ async function getServices() {
  */
 async function newIncident(user, payload, userList) {
   const { me } = user
+  console.log(me)
   const opUserEmail = me.email
   const from = await matchUser(opUserEmail, userList)
   const {

@@ -1,7 +1,7 @@
 const { ux } = require('@cto.ai/sdk')
 const path = require('path')
 const fs = require('fs')
-const { useOldAuthPrompt, newRunPrompts } = require('../prompts')
+const { useOldAuthPrompt, newRunPrompts, userPrompts } = require('../prompts')
 
 const OP_CONFIG = '/root/.config/@cto.ai/ops/platform-solutions/incident/config'
 const validFlags = [
@@ -84,12 +84,13 @@ function writeToFileSync({ dirPath, fileName, data }) {
  */
 async function promptForAuth() {
   authData = await ux.prompt(newRunPrompts)
+  let me = await ux.prompt(userPrompts)
   writeToFileSync({
     dirPath: OP_CONFIG,
     fileName: 'auth.json',
-    data: JSON.stringify(authData),
+    data: JSON.stringify({ authData, user: { me } }),
   })
-  return authData
+  return { authData, user: { me } }
 }
 
 /**
@@ -142,21 +143,6 @@ function getUrgency(priority) {
 
   return urgencies[priority]
 }
-
-// /**
-//  * validateDates checks the date range entered by the user, and will reprompt user for new date ranges if they are improperly entered
-//  *
-//  * @param {string} start The starting date range chosen by the user
-//  * @param {string} end The ending date range chosen by the user
-//  * @return {object} A valid start and end date range
-//  */
-// async function validateDates(start, end) {
-//   let startMoment = moment(start)
-//   let endMoment = moment(end)
-//   while (startMoment.isAfter(endMoment)) {}
-
-//   return urgencies[priority]
-// }
 
 module.exports = {
   getInitialJob,
