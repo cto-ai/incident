@@ -1,4 +1,4 @@
-const { ux, sdk } = require('@cto.ai/sdk')
+const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 const pd = require('../utils/api/pagerDuty')
 const {
@@ -116,7 +116,7 @@ async function createIncident(authData, user) {
         },
       })
       ux.spinner.stop('Done!')
-      sdk.log(
+      await ux.print(
         ux.colors.blue(`You can see the incident at ${incident.html_url}`)
       )
     }
@@ -132,7 +132,7 @@ async function createIncident(authData, user) {
  * @param {object} authData The user's entered auth data
  * @param {object} user     The current SDK user
  */
-async function searchIncidents(authData, user) {
+async function searchIncidents(authData) {
   // Init our PD client
   const { pagerDutyKey } = authData
   pd.initializePagerDuty(pagerDutyKey)
@@ -140,65 +140,73 @@ async function searchIncidents(authData, user) {
   // Get query information from the user
   const query = await ux.prompt(searchIncidentsPrompt)
 
-  sdk.log('')
+  await ux.print('')
   ux.spinner.start('Retrieving incidents')
   const incidents = await pd.getIncidents(query)
   ux.spinner.stop('Done!\n')
 
   // Nothing found; return early
   if (!incidents.length) {
-    sdk.log(ux.colors.blue('No incidents found!'))
+    await ux.print(ux.colors.blue('No incidents found!'))
     return incidents
   }
 
-  sdk.log(ux.colors.magenta('\nWe found the following incidents:\n'))
-  incidents.map(printIncident)
+  await ux.print(ux.colors.magenta('\nWe found the following incidents:'))
+  const incidentsStr = incidents.map(printIncident)
+  await ux.print(incidentsStr.join(''))
 }
 
 /**
  * printIncident pretty prints an incident.
  */
 function printIncident(incident) {
-  sdk.log(`\t${incident.title}`)
-  sdk.log(`\t\tStatus: ${incident.status}`)
-  sdk.log(`\t\tService: ${incident.service.summary}`)
-  sdk.log(`\t\tEscalation Policy: ${incident.escalation_policy.summary}`)
-  sdk.log(`\t\tUrgency: ${incident.urgency}`)
-  sdk.log(`\t\tCreated at: ${incident.created_at}`)
-  sdk.log(`\t\tLast modified: ${incident.last_status_change_at}`)
+  let incidentStr = `\n\t${incident.title}
+  \t\tStatus: ${incident.status}
+  \t\tService: ${incident.service.summary}
+  \t\tEscalation Policy: ${incident.escalation_policy.summary}
+  \t\tUrgency: ${incident.urgency}
+  \t\tCreated at: ${incident.created_at}
+  \t\tLast modified: ${incident.last_status_change_at}`
   if (incident.assignments.length) {
-    sdk.log(`\t\tPeople assigned:`)
-    incident.assignments.map(assignee => {
-      sdk.log(`\t\t\t${asignee.summary}`)
+    incidentStr += `\n\t\tPeople assigned:`
+    incident.assignments.map(async assignee => {
+      incidentStr += `\n\t\t\t${assignee.summary}`
     })
   }
-  sdk.log(`\t\tLink: ${incident.html_url}`)
+  incidentStr += `\n\t\tLink: ${incident.html_url}\n`
+  return incidentStr
 }
 
 /**
  * whoOnCall retrieves users on call with PagerDuty and prints them out
  *
  * @param {object} authData The user's entered auth data
- * @param {object} user     The current SDK user
  */
-async function whoOnCall(authData, user) {
+async function whoOnCall(authData) {
   // Init our PD client
   const { pagerDutyKey } = authData
   pd.initializePagerDuty(pagerDutyKey)
+  const { callOutCyan } = ux.colors
 
   // Pretty print the on call users for each policy
+  // Concatenated strings before printing for ux.print
   const onCalls = await pd.getOnCall()
-  Object.keys(onCalls).map(policy => {
-    sdk.log(
-      ux.colors.magenta(
-        `The following people are on call for the '${policy}' policy:\n\n`
-      )
+  Object.keys(onCalls).forEach(async policy => {
+    const policyTitle = ux.colors.magenta(
+      `\nThe following people are on call for the '${policy}' policy:\n`
     )
-    onCalls[policy].map(person => {
-      sdk.log(`\t${person.name}:`)
-      sdk.log(`\t\tID: ${person.id}`)
-      sdk.log(`\t\tEscalation Level: ${person.escalation_level}\n\n`)
+    const policyDetails = onCalls[policy].map(person => {
+      let personStr = `\n\t${person.name} - Escalation Level: ${person.escalation_level}`
+      if (person.end) {
+        const endingTime = new Date(person.end)
+        const formattedTimeStamp = endingTime.toUTCString()
+        personStr += `\n\t${callOutCyan(
+          `Rotational on-call ending on: ${formattedTimeStamp}`
+        )}`
+      }
+      return personStr
     })
+    await ux.print(`${policyTitle}${policyDetails.join('')}`)
   })
 }
 
@@ -212,11 +220,11 @@ async function updateIncident(authData, user) {
     statuses: ['triggered', 'acknowledged'],
   }
 
-  sdk.log('')
+  await ux.print('')
   ux.spinner.start('Retrieving incident list')
   const incidents = await pd.getIncidents(query)
   ux.spinner.stop('Done!')
-  sdk.log('')
+  await ux.print('')
 
   // Map incident titles to their ids
   const choicesMap = {}
@@ -225,7 +233,7 @@ async function updateIncident(authData, user) {
   })
   const choices = Object.keys(choicesMap)
   if (!choices.length) {
-    sdk.log('There are no incidents available to be updated!')
+    await ux.print('There are no incidents available to be updated!')
     return
   }
 
@@ -251,7 +259,7 @@ async function updateIncident(authData, user) {
       await snoozeIncident(incidentId, email)
       break
     default:
-      sdk.log(ux.colors.red('Invalid option selected!'))
+      await ux.print(ux.colors.red('Invalid option selected!'))
   }
 }
 

@@ -20,7 +20,12 @@ const jobs = {
 }
 
 async function main() {
-  const user = await sdk.user().catch(err => sdk.log(err))
+  const user = {
+    me: {
+      username: 'tim',
+      email: 'tim@cto.ai',
+    },
+  }
   const person = user && user.me ? `, ${user.me.username}` : ' there'
   const greeting = `\n👋  Welcome to Incident.sh  👋\n\nHi${person}!\n`
 
@@ -29,12 +34,12 @@ async function main() {
   try {
     initialJob = getInitialJob()
   } catch (err) {
-    sdk.log(ux.colors.red(err.message))
+    await ux.print(ux.colors.red(err.message))
     return
   }
 
-  sdk.log(LOGO)
-  sdk.log(greeting)
+  await ux.print(LOGO)
+  await ux.print(greeting)
 
   // Attempt to retrieve previous auth config and prompt the user if they
   // want to use it or enter new details, use old if we have a runtime job
@@ -62,7 +67,7 @@ async function main() {
     run = shouldContinue
   }
 
-  sdk.log(ux.colors.magenta(`\nSee you later! 👋`))
+  await ux.print(ux.colors.magenta(`\nSee you later! 👋`))
 }
 
 /**

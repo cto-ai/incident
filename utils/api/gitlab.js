@@ -12,7 +12,7 @@ const { Gitlab } = require('gitlab')
  * @return {string} The URL of the newly created issue
  */
 async function createGitlabIssue(token, projectId, summary) {
-  ux.spinner.start(`Creating GitLab Issue in Project ${projectId}`)
+  await ux.spinner.start(`Creating GitLab Issue in Project ${projectId}`)
   const api = new Gitlab({
     host: 'https://git.cto.ai',
     token,
@@ -34,10 +34,10 @@ async function createGitlabIssue(token, projectId, summary) {
       description,
       labels: 'incident.sh',
     })
-    ux.spinner.stop('Done!')
+    await ux.spinner.stop('Done!')
     return issue.web_url
   } catch (err) {
-    ux.spinner.stop('ERROR!')
+    await ux.spinner.stop('ERROR!')
     throw err
   }
 }

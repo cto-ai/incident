@@ -105,21 +105,21 @@ async function newIncident(user, payload, userList) {
  */
 async function getOnCall() {
   // Get on call users
-  ux.spinner.start('Retrieving users on call')
+  await ux.spinner.start('Retrieving users on call')
   const { body } = await pd.onCalls.listAllOnCalls(qs)
   const onCalls = JSON.parse(body).oncalls
-
   // Sort users into their policies
   const sorted = {}
   onCalls.map(policy => {
     // Organize the data from PagerDuty's response
     const policyName = policy.escalation_policy.summary
-    const { escalation_level } = policy
+    const { escalation_level, end } = policy
     const { summary, id } = policy.user
     const user = {
       name: summary,
       escalation_level,
       id,
+      end,
     }
 
     // Add the user to their escalation policy
@@ -138,7 +138,7 @@ async function getOnCall() {
       return 0
     })
   })
-  ux.spinner.stop('Done!\n')
+  await ux.spinner.stop('Done!')
 
   return sorted
 }
@@ -152,6 +152,7 @@ async function getOnCall() {
  */
 async function getIncidents(q) {
   const query = Object.assign({ ...qs }, q) // Override default query with passed values
+  console.log(query)
   const { body } = await pd.incidents.listIncidents(query)
   return JSON.parse(body).incidents
 }

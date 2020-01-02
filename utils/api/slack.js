@@ -55,9 +55,9 @@ async function sendSlackMessage(webHookURL, opsIncident, user) {
     attachments: attachments,
   }
 
-  ux.spinner.start('Posting to Slack')
+  await ux.spinner.start('Posting to Slack')
   await webhook.send(slackMessage)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 }
 
 module.exports = sendSlackMessage

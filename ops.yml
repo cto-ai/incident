@@ -5,6 +5,7 @@ commands:
     public: false
     sourceCodeURL: "https://github.com/cto-ai/Incident"
     run: node /ops/index.js
+    sdk: "2"
     mountCwd: false
     mountHome: true
     help:
@@ -12,8 +13,8 @@ commands:
       arguments:
         none: ""
       options:
-        list: 'List GitLab issues'
-        search: 'Search for PagerDuty incidents'
-        create: 'Create a PagerDuty incident'
-        update: 'Update a PagerDuty incident'
-        onCall: 'List users on call'
+        list: "List GitLab issues"
+        search: "Search for PagerDuty incidents"
+        create: "Create a PagerDuty incident"
+        update: "Update a PagerDuty incident"
+        onCall: "List users on call"
