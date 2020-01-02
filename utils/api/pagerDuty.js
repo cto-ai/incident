@@ -90,7 +90,6 @@ async function getServices() {
  */
 async function newIncident(user, payload, userList) {
   const { me } = user
-  console.log(me)
   const opUserEmail = me.email
   const from = await matchUser(opUserEmail, userList)
   const {
@@ -153,7 +152,6 @@ async function getOnCall() {
  */
 async function getIncidents(q) {
   const query = Object.assign({ ...qs }, q) // Override default query with passed values
-  console.log(query)
   const { body } = await pd.incidents.listIncidents(query)
   return JSON.parse(body).incidents
 }
