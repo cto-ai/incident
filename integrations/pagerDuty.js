@@ -146,10 +146,9 @@ async function searchIncidents(authData) {
   // Get query information from the user
   const query = await getSearchQuery()
 
-  await ux.print('')
-  ux.spinner.start('Retrieving incidents')
+  await ux.spinner.start('Retrieving incidents')
   const incidents = await pd.getIncidents(query)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 
   // Nothing found; return early
   if (!incidents.length) {
@@ -225,11 +224,9 @@ async function updateIncident(authData, user) {
     statuses: ['triggered', 'acknowledged'],
   }
 
-  await ux.print('')
   ux.spinner.start('Retrieving incident list')
   const incidents = await pd.getIncidents(query)
   ux.spinner.stop('Done!')
-  await ux.print('')
 
   // Map incident titles to their ids
   const choicesMap = {}
@@ -346,7 +343,7 @@ async function snoozeIncident(incidentId, email) {
 
   ux.spinner.start(`Snoozing incident ${incidentId}`)
   await pd.snoozeIncident(incidentId, email, { duration })
-  ux.spinner.stop('Done!')
+  ux.spinner.stop('✅ Incident has been snoozed!')
 }
 
 module.exports = {

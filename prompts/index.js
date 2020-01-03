@@ -88,13 +88,12 @@ const incidentStartPrompts = [
     type: 'datetime',
     name: 'started_at',
     message: 'When did the incident start',
-    format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
     maximum: new Date(),
   },
   {
     type: 'list',
     name: 'status',
-    message: 'What is the current status to of the incident',
+    message: 'What is the current status of the incident',
     choices: [
       '🔍 Investigating',
       '🚨 Identified',
@@ -132,7 +131,7 @@ const pagerDutyAssigneePrompt = choices => {
     {
       type: 'list',
       name: 'assignee',
-      message: `Which of PagerDuty user would you like to assign to this incident`,
+      message: `Which PagerDuty user would you like to assign to this incident`,
       choices,
     },
   ]
@@ -197,31 +196,22 @@ const snoozeDurationPrompt = [
   {
     type: 'datetime',
     name: 'snoozeDuration',
-    message: `Until when would you like to snooze this incident`,
+    message: `How long would you like to snooze this incident`,
     format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
     minimum: new Date(),
-  },
-]
-
-const continuePrompts = [
-  {
-    type: 'input',
-    name: 'continue',
-    message: `\nPress enter to continue →`,
-    afterMessage: ' ',
   },
 ]
 
 async function getSearchQuery() {
   // Datetime prompt does not currently support formatting of the date @ sdk v2.0.1
   const currentTime = moment().format()
-  const startDatePrompt = {
+  const endDatePrompt = {
     type: 'datetime',
     name: 'until',
     message: `What is the end of the date range over which you want to search`,
     maximum: currentTime,
   }
-  const { until } = await ux.prompt(startDatePrompt)
+  const { until } = await ux.prompt(endDatePrompt)
   const chosenEndDate = moment(until)
   // PagerDuty getIncident API returns a bad request when date ranges are longer than 179 days from current time
   const optionPrompts = [
@@ -283,7 +273,6 @@ module.exports = {
   howUpdatePrompt,
   noteContentsPrompt,
   snoozeDurationPrompt,
-  continuePrompts,
   getSearchQuery,
   shouldContinuePrompt,
   escalatePrompt,
