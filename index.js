@@ -20,7 +20,7 @@ const jobs = {
 }
 
 async function main() {
-  const greeting = `\n👋  Welcome to Incident.sh  👋\n\nHi there!\n`
+  const greeting = `\n👋  Welcome to Incident.sh  👋\n`
 
   // Attempt to parse the user's passed flags
   let initialJob
@@ -60,7 +60,7 @@ async function main() {
     run = shouldContinue
   }
 
-  await ux.print(ux.colors.magenta(`\nSee you later! 👋`))
+  await ux.print(ux.colors.magenta(`\nThanks for using Incident.sh! 👋`))
 }
 
 /**

@@ -8,8 +8,7 @@ const { gitIssues } = require('../utils/api/gitlab')
  */
 async function listIssues(authData) {
   const { gitlabToken, projectId } = authData
-  await ux.print('')
-  await ux.spinner.start('Retrieving GitLab issues')
+  await ux.spinner.start('\nRetrieving GitLab issues')
   const issues = await gitIssues(gitlabToken, projectId)
   await ux.spinner.stop('Done!')
 
