@@ -1,7 +1,7 @@
 const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 
-const { secondary, reset } = ux.colors
+const { secondary } = ux.colors
 
 const newRunPrompts = [
   {

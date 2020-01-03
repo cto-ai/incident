@@ -1,6 +1,6 @@
 const { ux } = require('@cto.ai/sdk')
 const { gitIssues } = require('../utils/api/gitlab')
-
+const { magenta } = ux.colors
 /**
  * listIssues retrieves issues from the GitLab API and formats results.
  *
@@ -8,25 +8,25 @@ const { gitIssues } = require('../utils/api/gitlab')
  */
 async function listIssues(authData) {
   const { gitlabToken, projectId } = authData
-  await ux.spinner.start('\nRetrieving GitLab issues')
+  await ux.spinner.start('Retrieving GitLab issues')
   const issues = await gitIssues(gitlabToken, projectId)
   await ux.spinner.stop('Done!')
 
   if (!issues.length) {
-    await ux.print(ux.colors.magenta('\nNo issues found!'))
+    await ux.print(magenta('\nNo issues found!'))
     return
   }
 
-  await ux.print(ux.colors.magenta('\nWe found the following open issues:'))
-  const formattedStr = issues.map(printIssue)
-  await ux.print(formattedStr.join(''))
+  const titleStr = magenta('\nWe found the following open issues:')
+  const issueStr = issues.map(printIssue)
+  await ux.print(`${titleStr}\n${issueStr.join('')}`)
 }
 
 /**
  * printIssue pretty prints an issue.
  */
 function printIssue(issue) {
-  let issueStr = `\n${ux.colors.magenta(`\t${issue.title}`)}
+  let issueStr = `\n${magenta(`\t${issue.title}`)}
   \t\tID: ${issue.id}
   \t\tState: ${issue.state}
   \t\tDescription: \n\t\t\t${issue.description.replace(

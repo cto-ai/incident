@@ -18,6 +18,7 @@ const {
 const { getUrgency } = require('../utils/helpers')
 const { createGitlabIssue } = require('../utils/api/gitlab')
 const sendSlackMessage = require('../utils/api/slack')
+const { blue, callOutCyan, magenta, red } = ux.colors
 
 /**
  * createIncident prompts the user for info and creates a PagerDuty incident.
@@ -123,9 +124,7 @@ async function createIncident(authData, user) {
         },
       })
       ux.spinner.stop('Done!')
-      await ux.print(
-        ux.colors.blue(`You can see the incident at ${incident.html_url}`)
-      )
+      await ux.print(blue(`You can see the incident at ${incident.html_url}`))
     }
   } catch (err) {
     console.error(err)
@@ -150,17 +149,17 @@ async function searchIncidents(authData) {
   await ux.print('')
   ux.spinner.start('Retrieving incidents')
   const incidents = await pd.getIncidents(query)
-  ux.spinner.stop('Done!\n')
+  ux.spinner.stop('Done!')
 
   // Nothing found; return early
   if (!incidents.length) {
-    await ux.print(ux.colors.blue('No incidents found!'))
+    await ux.print(blue('\nNo incidents found!'))
     return incidents
   }
 
-  await ux.print(ux.colors.magenta('\nWe found the following incidents:'))
+  const titleStr = magenta('\nWe found the following incidents:')
   const incidentsStr = incidents.map(printIncident)
-  await ux.print(incidentsStr.join(''))
+  await ux.print(`${titleStr}\n${incidentsStr.join('')}`)
 }
 
 /**
@@ -193,13 +192,12 @@ async function whoOnCall(authData) {
   // Init our PD client
   const { pagerDutyKey } = authData
   pd.initializePagerDuty(pagerDutyKey)
-  const { callOutCyan } = ux.colors
 
   // Pretty print the on call users for each policy
   // Concatenated strings before printing for ux.print
   const onCalls = await pd.getOnCall()
   Object.keys(onCalls).forEach(async policy => {
-    const policyTitle = ux.colors.magenta(
+    const policyTitle = magenta(
       `\nThe following people are on call for the '${policy}' policy:\n`
     )
     const policyDetails = onCalls[policy].map(person => {
@@ -266,7 +264,7 @@ async function updateIncident(authData, user) {
       await snoozeIncident(incidentId, email)
       break
     default:
-      await ux.print(ux.colors.red('Invalid option selected!'))
+      await ux.print(red('Invalid option selected!'))
   }
 }
 
