@@ -8,16 +8,16 @@ const { magenta } = ux.colors
  */
 async function listIssues(authData) {
   const { gitlabToken, projectId } = authData
-  await ux.spinner.start('Retrieving GitLab issues')
+  await ux.spinner.start('🏃‍ Retrieving GitLab issues')
   const issues = await gitIssues(gitlabToken, projectId)
-  await ux.spinner.stop('Done!')
 
   if (!issues.length) {
-    await ux.print(magenta('\nNo issues found!'))
+    await ux.print()
+    await ux.spinner.stop(magenta('🤷‍  No issues found!'))
     return
   }
-
-  const titleStr = magenta('\nWe found the following open issues:')
+  await ux.spinner.stop('✅ Retrieved GitLab issues!')
+  const titleStr = magenta('\n📈 Here are the currently open issues:')
   const issueStr = issues.map(printIssue)
   await ux.print(`${titleStr}\n${issueStr.join('')}`)
 }
@@ -38,7 +38,7 @@ function printIssue(issue) {
   if (issue.weight) issueStr += `\n\t\tWeight: ${issue.weight}`
   if (issue.labels.length) {
     issueStr += `\n\t\tLabels:`
-    issue.labels.forEach(label => (issueStr += `\n\t\t\t${label}`))
+    issue.labels.forEach(label => (issueStr += ` ${label}`))
   }
   if (issue.assignees.length) {
     issueStr += `\n\t\tAssignee(s):`

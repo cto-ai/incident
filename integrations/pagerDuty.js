@@ -103,7 +103,7 @@ async function createIncident(authData, user) {
       )
       const serviceId = serviceChoices[service]
 
-      ux.spinner.start('Creating PagerDuty incident')
+      await ux.spinner.start('🏃‍ Creating a new PagerDuty incident')
       // Create the PagerDuty incident
       const incident = await pd.newIncident(user, {
         incident: {
@@ -123,7 +123,7 @@ async function createIncident(authData, user) {
           urgency: getUrgency(impact),
         },
       })
-      ux.spinner.stop('Done!')
+      await ux.spinner.stop('🎉 PagerDuty incident created! 🎉')
       await ux.print(blue(`You can see the incident at ${incident.html_url}`))
     }
   } catch (err) {
@@ -146,17 +146,17 @@ async function searchIncidents(authData) {
   // Get query information from the user
   const query = await getSearchQuery()
 
-  await ux.spinner.start('Retrieving incidents')
+  await ux.spinner.start('🏃‍  Retrieving incidents')
   const incidents = await pd.getIncidents(query)
-  await ux.spinner.stop('Done!')
 
   // Nothing found; return early
   if (!incidents.length) {
-    await ux.print(blue('\nNo incidents found!'))
+    await ux.spinner.stop(magenta('🤷‍  No incidents found!'))
     return incidents
   }
 
-  const titleStr = magenta('\nWe found the following incidents:')
+  await ux.spinner.stop('✅ Retrieved incidents!')
+  const titleStr = magenta('\nHere are the retrieved incidents:')
   const incidentsStr = incidents.map(printIncident)
   await ux.print(`${titleStr}\n${incidentsStr.join('')}`)
 }
@@ -224,9 +224,9 @@ async function updateIncident(authData, user) {
     statuses: ['triggered', 'acknowledged'],
   }
 
-  ux.spinner.start('Retrieving incident list')
+  await ux.spinner.start('Retrieving incident list')
   const incidents = await pd.getIncidents(query)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 
   // Map incident titles to their ids
   const choicesMap = {}
@@ -279,9 +279,9 @@ async function resolveIncident(incidentId, email) {
     },
   }
 
-  ux.spinner.start(`Resolving incident ${incidentId}`)
+  await ux.spinner.start(`Resolving incident ${incidentId}`)
   await pd.updateIncident(incidentId, email, resolvePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 }
 
 /**
@@ -291,11 +291,7 @@ async function resolveIncident(incidentId, email) {
  * @param {string} email      The current user's email
  */
 async function escalateIncident(incidentId, email) {
-  let chosenLevel = await ux.prompt(escalatePrompt)
-  while (chosenLevel.level === '' || isNaN(chosenLevel.level)) {
-    await ux.print('Please enter an integer')
-    chosenLevel = await ux.prompt(escalatePrompt)
-  }
+  const chosenLevel = await ux.prompt(escalatePrompt)
   const escalatePayload = {
     incident: {
       type: 'incident_reference',
@@ -303,11 +299,11 @@ async function escalateIncident(incidentId, email) {
     },
   }
 
-  ux.spinner.start(
+  await ux.spinner.start(
     `Escalating incident ${incidentId} to level ${chosenLevel.level}`
   )
   await pd.updateIncident(incidentId, email, escalatePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 }
 
 /**
@@ -324,9 +320,9 @@ async function addNote(incidentId, email) {
     },
   }
 
-  ux.spinner.start(`Adding note to incident ${incidentId}`)
+  await ux.spinner.start(`Adding note to incident ${incidentId}`)
   await pd.addNote(incidentId, email, notePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop('Done!')
 }
 
 /**
@@ -341,9 +337,9 @@ async function snoozeIncident(incidentId, email) {
     (new Date(snoozeDuration).getTime() - new Date().getTime()) / 1000
   )
 
-  ux.spinner.start(`Snoozing incident ${incidentId}`)
+  ux.spinner.start(`😴  Snoozing incident ${incidentId}`)
   await pd.snoozeIncident(incidentId, email, { duration })
-  ux.spinner.stop('✅ Incident has been snoozed!')
+  ux.spinner.stop('✅  Incident has been snoozed!')
 }
 
 module.exports = {

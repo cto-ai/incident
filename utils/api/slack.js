@@ -1,4 +1,4 @@
-const { sdk, ux } = require('@cto.ai/sdk')
+const { ux } = require('@cto.ai/sdk')
 const { IncomingWebhook } = require('@slack/webhook')
 const colours = {
   Investigating: '#831313',

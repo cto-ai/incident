@@ -60,7 +60,7 @@ async function main() {
     run = shouldContinue
   }
 
-  await ux.print(ux.colors.magenta(`\nThanks for using Incident.sh! 👋`))
+  await ux.print(ux.colors.magenta(`👋  Thanks for using Incident.sh! 👋`))
 }
 
 /**

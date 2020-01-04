@@ -2,23 +2,12 @@ const { ux } = require('@cto.ai/sdk')
 const path = require('path')
 const fs = require('fs')
 const { useOldAuthPrompt, newRunPrompts, userPrompts } = require('../prompts')
-
-const OP_CONFIG = '/root/.config/@cto.ai/ops/platform-solutions/incident/config'
-const validFlags = [
-  '-l',
-  '--list',
-  '-s',
-  '--search',
-  '-c',
-  '--create',
-  '-u',
-  '--update',
-  '-o',
-  '--onCall',
-  '--build',
-  '-h',
-  '--help',
-]
+const {
+  AUTH_FILE_NAME,
+  OP_CONFIG,
+  VALID_FLAGS,
+  URGENCIES,
+} = require('../constants')
 
 /**
  * getInitialJob returns the name of the users runtime selected job.
@@ -33,7 +22,7 @@ function getInitialJob() {
 
   // Validate the passed flags
   flags.map(f => {
-    if (!validFlags.includes(f)) {
+    if (!VALID_FLAGS.includes(f)) {
       throw new Error('Invalid flag passed! Exiting...')
     }
   })
@@ -87,7 +76,7 @@ async function promptForAuth() {
   let me = await ux.prompt(userPrompts)
   writeToFileSync({
     dirPath: OP_CONFIG,
-    fileName: 'auth.json',
+    fileName: AUTH_FILE_NAME,
     data: JSON.stringify({ authData, user: { me } }),
   })
   return { authData, user: { me } }
@@ -102,7 +91,7 @@ async function promptForAuth() {
  */
 async function retrieveAuth(initialSelected) {
   let authData
-  const authFile = `${OP_CONFIG}/auth.json`
+  const authFile = `${OP_CONFIG}/${AUTH_FILE_NAME}`
   if (!fs.existsSync(authFile)) {
     authData = await promptForAuth()
     return authData
@@ -133,15 +122,7 @@ async function retrieveAuth(initialSelected) {
  * @return {string} The PagerDuty urgency level
  */
 function getUrgency(priority) {
-  const urgencies = {
-    '🔥   All customers are affected.': 'high',
-    '😭   Large segment of customers are affected.': 'high',
-    '😫   Small segment of customers are affected.': 'low',
-    '😣   Site performance degraded for some customers.': 'low',
-    '☹️    Potential issue, but customers are currently unaware.': 'low',
-  }
-
-  return urgencies[priority]
+  return URGENCIES[priority]
 }
 
 module.exports = {

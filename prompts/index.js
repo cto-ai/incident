@@ -1,7 +1,7 @@
 const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 
-const { secondary } = ux.colors
+const { callOutCyan, secondary } = ux.colors
 
 const newRunPrompts = [
   {
@@ -252,9 +252,13 @@ const shouldContinuePrompt = [
 
 const escalatePrompt = [
   {
-    type: 'input',
+    type: 'number',
     name: 'level',
-    message: `Please enter the escalation level to promote this incident to`,
+    message: `Please enter the escalation level to promote this incident to ${callOutCyan(
+      '(An integer from 1 - 20)'
+    )}`,
+    minimum: 1,
+    maximum: 20,
   },
 ]
 

@@ -1,5 +1,6 @@
 const { sdk, ux } = require('@cto.ai/sdk')
 const pagerDuty = require('node-pagerduty')
+const { magenta, red } = ux.colors
 
 // PagerDuty config variables
 let pd // Main API instance
@@ -171,10 +172,10 @@ async function updateIncident(id, from, payload) {
     return body
   } catch (err) {
     if (`${err}`.includes('Incident Already Resolved')) {
-      sdk.log(ux.colors.magenta('\nIncident already resolved!\n'))
+      sdk.log(magenta('\nIncident already resolved!\n'))
       return {}
     }
-    sdk.log(ux.colors.red(`${err}`))
+    sdk.log(red(`${err}`))
   }
 }
 
@@ -192,7 +193,7 @@ async function addNote(id, from, payload) {
     const { body } = await pd.incidents.createNote(id, from, payload)
     return body
   } catch (err) {
-    sdk.log(ux.colors.red(`${err}`))
+    sdk.log(red(`${err}`))
     throw err
   }
 }
@@ -211,7 +212,7 @@ async function snoozeIncident(id, from, payload) {
     const { body } = await pd.incidents.snoozeIncident(id, from, payload)
     return body
   } catch (err) {
-    sdk.log(ux.colors.red(`${err}`))
+    sdk.log(red(`${err}`))
   }
 }
 
