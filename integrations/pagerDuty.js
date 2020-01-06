@@ -145,7 +145,9 @@ async function searchIncidents(authData) {
 
   // Get query information from the user
   const query = await getSearchQuery()
-
+  // Prompt returns values in title case for UX readability. API only accepts lowercase values.
+  query.statuses = query.statuses.map(status => status.toLowerCase())
+  query.urgencies = query.urgencies.map(urgency => urgency.toLowerCase())
   await ux.spinner.start('🏃‍  Retrieving incidents')
   const incidents = await pd.getIncidents(query)
 

@@ -139,7 +139,7 @@ async function getOnCall() {
       return 0
     })
   })
-  await ux.spinner.stop('Done!')
+  await ux.spinner.stop('✅  Retrieved on call schedule!')
 
   return sorted
 }
