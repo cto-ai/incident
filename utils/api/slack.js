@@ -54,9 +54,12 @@ async function sendSlackMessage(webHookURL, opsIncident, user) {
     color: '#2980cc',
     attachments: attachments,
   }
-
-  await ux.spinner.start('🏃  Posting to Slack')
-  await webhook.send(slackMessage)
+  try {
+    await ux.spinner.start('🏃  Posting to Slack')
+    await webhook.send(slackMessage)
+  } catch (err) {
+    console.log(err)
+  }
   await ux.spinner.stop('✅  Posted to slack!')
 }
 

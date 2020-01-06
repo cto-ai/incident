@@ -127,7 +127,7 @@ async function createIncident(authData, user) {
       await ux.print(blue(`You can see the incident at ${incident.html_url}`))
     }
   } catch (err) {
-    console.error(err)
+    await handleError(err, 'Failed to create an incident')
   }
 }
 
@@ -157,7 +157,7 @@ async function searchIncidents(authData) {
     return incidents
   }
 
-  await ux.spinner.stop('✅ Retrieved incidents!')
+  await ux.spinner.stop('✅  Retrieved incidents!')
   const titleStr = magenta('\nHere are the retrieved incidents:')
   const incidentsStr = incidents.map(printIncident)
   await ux.print(`${titleStr}\n${incidentsStr.join('')}`)

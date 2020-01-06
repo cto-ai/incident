@@ -1,5 +1,6 @@
 const { ux } = require('@cto.ai/sdk')
 const { gitIssues } = require('../utils/api/gitlab')
+const { handleError } = require('../utils/handlers')
 const { magenta } = ux.colors
 /**
  * listIssues retrieves issues from the GitLab API and formats results.
@@ -12,11 +13,11 @@ async function listIssues(authData) {
   const issues = await gitIssues(gitlabToken, projectId)
 
   if (!issues.length) {
-    await ux.print()
     await ux.spinner.stop(magenta('🤷‍  No issues found!'))
+    await handleError('', 'No GitLab issues have been found')
     return
   }
-  await ux.spinner.stop('✅ Retrieved GitLab issues!')
+  await ux.spinner.stop('✅  Retrieved GitLab issues!')
   const titleStr = magenta('\n📈 Here are the currently open issues:')
   const issueStr = issues.map(printIssue)
   await ux.print(`${titleStr}\n${issueStr.join('')}`)

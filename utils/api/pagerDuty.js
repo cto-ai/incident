@@ -1,4 +1,5 @@
 const { sdk, ux } = require('@cto.ai/sdk')
+const { handleError } = require('../handlers')
 const pagerDuty = require('node-pagerduty')
 const { magenta, red } = ux.colors
 
@@ -24,9 +25,14 @@ function initializePagerDuty(token) {
  * @return {array} A list of all the users
  */
 async function getUsers() {
-  const { body } = await pd.users.listUsers(qs)
-  const { users } = JSON.parse(body)
-  return users
+  try {
+    const { body } = await pd.users.listUsers(qs)
+    const { users } = JSON.parse(body)
+    return users
+  } catch (err) {
+    console.log(err)
+    await handleError(err, 'Failed to retrieve PagerDuty users')
+  }
 }
 
 /**
@@ -107,41 +113,45 @@ async function newIncident(user, payload, userList) {
 async function getOnCall() {
   // Get on call users
   await ux.spinner.start('Retrieving users on call')
-  const { body } = await pd.onCalls.listAllOnCalls(qs)
-  const onCalls = JSON.parse(body).oncalls
-  // Sort users into their policies
-  const sorted = {}
-  onCalls.map(policy => {
-    // Organize the data from PagerDuty's response
-    const policyName = policy.escalation_policy.summary
-    const { escalation_level, end } = policy
-    const { summary, id } = policy.user
-    const user = {
-      name: summary,
-      escalation_level,
-      id,
-      end,
-    }
+  try {
+    const { body } = await pd.onCalls.listAllOnCalls(qs)
+    const onCalls = JSON.parse(body).oncalls
+    // Sort users into their policies
+    const sorted = {}
+    onCalls.map(policy => {
+      // Organize the data from PagerDuty's response
+      const policyName = policy.escalation_policy.summary
+      const { escalation_level, end } = policy
+      const { summary, id } = policy.user
+      const user = {
+        name: summary,
+        escalation_level,
+        id,
+        end,
+      }
 
-    // Add the user to their escalation policy
-    if (sorted[policyName]) {
-      sorted[policyName] = [...sorted[policyName], user]
-    } else {
-      sorted[policyName] = [user]
-    }
-  })
-
-  // Sort users, within the policies, by their escalation level
-  Object.keys(sorted).map(k => {
-    sorted[k] = sorted[k].sort((a, b) => {
-      if (a.escalation_level > b.escalation_level) return 1
-      if (b.escalation_level > a.escalation_level) return -1
-      return 0
+      // Add the user to their escalation policy
+      if (sorted[policyName]) {
+        sorted[policyName] = [...sorted[policyName], user]
+      } else {
+        sorted[policyName] = [user]
+      }
     })
-  })
-  await ux.spinner.stop('✅  Retrieved on call schedule!')
 
-  return sorted
+    // Sort users, within the policies, by their escalation level
+    Object.keys(sorted).map(k => {
+      sorted[k] = sorted[k].sort((a, b) => {
+        if (a.escalation_level > b.escalation_level) return 1
+        if (b.escalation_level > a.escalation_level) return -1
+        return 0
+      })
+    })
+    await ux.spinner.stop('✅  Retrieved on call schedule!')
+
+    return sorted
+  } catch (err) {
+    await handleError(err, 'Failed to get users on call.')
+  }
 }
 
 /**

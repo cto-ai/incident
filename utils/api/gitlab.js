@@ -2,6 +2,7 @@ const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 require('moment-timezone')
 const { Gitlab } = require('gitlab')
+const { handleError } = require('../handlers')
 
 /**
  * createGitlabIssue consolidates user info into a new GitLab issue.
@@ -39,8 +40,8 @@ async function createGitlabIssue(token, projectId, summary) {
     )
     return issue.web_url
   } catch (err) {
-    await ux.spinner.stop('ERROR!')
-    throw err
+    await ux.spinner.stop('😞  Unable to create GitLab issue!')
+    await handleError(err, 'Could not create GitLab issue')
   }
 }
 
@@ -57,13 +58,17 @@ async function gitIssues(token, projectId) {
     host: 'https://git.cto.ai',
     token,
   })
-  const results = await api.Issues.all({
-    projectId,
-    groupId: null,
-    scope: 'all',
-    state: 'opened',
-  })
-  return results
+  try {
+    const results = await api.Issues.all({
+      projectId,
+      groupId: null,
+      scope: 'all',
+      state: 'opened',
+    })
+    return results
+  } catch (err) {
+    await handleError(err, 'Unable to retrieve GitLab issues')
+  }
 }
 
 module.exports = {

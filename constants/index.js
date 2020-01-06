@@ -24,10 +24,15 @@ const URGENCIES = {
   '☹️    Potential issue, but customers are currently unaware.': 'low',
 }
 
+const SUCCESS_TAGS = ['track', 'incident', 'success']
+const ERROR_TAGS = ['track', 'incident', 'errror']
+
 module.exports = {
   LOGO,
   AUTH_FILE_NAME,
   OP_CONFIG,
   VALID_FLAGS,
   URGENCIES,
+  SUCCESS_TAGS,
+  ERROR_TAGS,
 }
