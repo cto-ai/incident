@@ -226,9 +226,8 @@ async function updateIncident(authData, user) {
     statuses: ['triggered', 'acknowledged'],
   }
 
-  await ux.spinner.start('Retrieving incident list')
+  await ux.spinner.start('🏃 Retrieving incident list')
   const incidents = await pd.getIncidents(query)
-  await ux.spinner.stop('Done!')
 
   // Map incident titles to their ids
   const choicesMap = {}
@@ -237,9 +236,12 @@ async function updateIncident(authData, user) {
   })
   const choices = Object.keys(choicesMap)
   if (!choices.length) {
-    await ux.print('There are no incidents available to be updated!')
+    await ux.spinner.stop(
+      '🤷‍  There are no incidents available to be updated!'
+    )
     return
   }
+  await ux.spinner.stop('✅  Retrieved incident list!')
 
   // Get user to select an incident/update type and setup config values
   const { selected } = await ux.prompt(updateSelectPrompt(choices))
@@ -281,9 +283,9 @@ async function resolveIncident(incidentId, email) {
     },
   }
 
-  await ux.spinner.start(`Resolving incident ${incidentId}`)
+  await ux.spinner.start(`♻️  Resolving incident ${incidentId}`)
   await pd.updateIncident(incidentId, email, resolvePayload)
-  await ux.spinner.stop('Done!')
+  await ux.spinner.stop(`✅  Indicent ${incidentId} has been resolved!`)
 }
 
 /**
@@ -302,10 +304,12 @@ async function escalateIncident(incidentId, email) {
   }
 
   await ux.spinner.start(
-    `Escalating incident ${incidentId} to level ${chosenLevel.level}`
+    `⬆️  Escalating incident ${incidentId} to level ${chosenLevel.level}`
   )
   await pd.updateIncident(incidentId, email, escalatePayload)
-  await ux.spinner.stop('Done!')
+  await ux.spinner.stop(
+    `✅  Incident ${incidentId} has been escalated to level ${chosenLevel.level}`
+  )
 }
 
 /**
@@ -322,9 +326,9 @@ async function addNote(incidentId, email) {
     },
   }
 
-  await ux.spinner.start(`Adding note to incident ${incidentId}`)
+  await ux.spinner.start(`🏃  Adding note to incident ${incidentId}`)
   await pd.addNote(incidentId, email, notePayload)
-  await ux.spinner.stop('Done!')
+  await ux.spinner.stop(`✅  Note has been added to incident ${incidentId}!`)
 }
 
 /**
