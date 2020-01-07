@@ -19,7 +19,7 @@ const { getUrgency } = require('../utils/helpers')
 const { createGitlabIssue } = require('../utils/api/gitlab')
 const sendSlackMessage = require('../utils/api/slack')
 const { blue, callOutCyan, magenta, red } = ux.colors
-const { handleSuccess } = require('../utils')
+const { handleSuccess } = require('../utils/handlers')
 /**
  * createIncident prompts the user for info and creates a PagerDuty incident.
  *
