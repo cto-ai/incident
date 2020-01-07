@@ -75,7 +75,7 @@ const incidentStartPrompts = [
   {
     type: 'list',
     name: 'impact',
-    message: 'What impact is the incident having',
+    message: 'What is the impact of this incident',
     choices: [
       '🔥   All customers are affected.',
       '😭   Large segment of customers are affected.',
@@ -93,7 +93,7 @@ const incidentStartPrompts = [
   {
     type: 'list',
     name: 'status',
-    message: 'What is the current status of the incident',
+    message: 'What is the current phase of the incident',
     choices: [
       '🔍 Investigating',
       '🚨 Identified',
@@ -104,7 +104,7 @@ const incidentStartPrompts = [
   {
     type: 'input',
     name: 'message',
-    message: 'What is the current incident update',
+    message: 'What is the current incident status',
   },
 ]
 

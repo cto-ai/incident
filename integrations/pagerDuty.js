@@ -19,7 +19,7 @@ const { getUrgency } = require('../utils/helpers')
 const { createGitlabIssue } = require('../utils/api/gitlab')
 const sendSlackMessage = require('../utils/api/slack')
 const { blue, callOutCyan, magenta, red } = ux.colors
-
+const { handleSuccess } = require('../utils')
 /**
  * createIncident prompts the user for info and creates a PagerDuty incident.
  *
@@ -68,10 +68,12 @@ async function createIncident(authData, user) {
 
     if (gitlab) {
       await createGitlabIssue(gitlabToken, projectId, incidentSummary)
+      await handleSuccess('Create GitLab Issue', incidentSummary)
     }
 
     if (slack) {
       await sendSlackMessage(slackWebHook, incidentSummary, user)
+      await handleSuccess('Create Slack Message', incidentSummary)
     }
 
     if (pagerDuty) {
@@ -125,6 +127,7 @@ async function createIncident(authData, user) {
       })
       await ux.spinner.stop('🎉 PagerDuty incident created! 🎉')
       await ux.print(blue(`You can see the incident at ${incident.html_url}`))
+      await handleSuccess('Create PagerDuty incident', incident)
     }
   } catch (err) {
     await handleError(err, 'Failed to create an incident')
@@ -161,6 +164,7 @@ async function searchIncidents(authData) {
   const titleStr = magenta('\nHere are the retrieved incidents:')
   const incidentsStr = incidents.map(printIncident)
   await ux.print(`${titleStr}\n${incidentsStr.join('')}`)
+  await handleSuccess('Search Incidents', query)
 }
 
 /**
