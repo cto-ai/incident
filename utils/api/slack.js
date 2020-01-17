@@ -1,5 +1,6 @@
-const { sdk, ux } = require('@cto.ai/sdk')
+const { ux } = require('@cto.ai/sdk')
 const { IncomingWebhook } = require('@slack/webhook')
+const { handleError } = require('../handlers')
 const colours = {
   Investigating: '#831313',
   Identified: '#f0adb4',
@@ -54,10 +55,13 @@ async function sendSlackMessage(webHookURL, opsIncident, user) {
     color: '#2980cc',
     attachments: attachments,
   }
-
-  ux.spinner.start('Posting to Slack')
-  await webhook.send(slackMessage)
-  ux.spinner.stop('Done!')
+  try {
+    await ux.spinner.start('🏃  Posting to Slack')
+    await webhook.send(slackMessage)
+  } catch (err) {
+    await handleError(err, 'Failed to post to Slack')
+  }
+  await ux.spinner.stop('✅  Posted to slack!')
 }
 
 module.exports = sendSlackMessage

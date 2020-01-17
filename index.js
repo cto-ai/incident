@@ -20,25 +20,23 @@ const jobs = {
 }
 
 async function main() {
-  const user = await sdk.user().catch(err => sdk.log(err))
-  const person = user && user.me ? `, ${user.me.username}` : ' there'
-  const greeting = `\n👋  Welcome to Incident.sh  👋\n\nHi${person}!\n`
+  const greeting = `\n👋  Welcome to Incident.sh  👋\n`
 
   // Attempt to parse the user's passed flags
   let initialJob
   try {
     initialJob = getInitialJob()
   } catch (err) {
-    sdk.log(ux.colors.red(err.message))
+    await ux.print(ux.colors.red(err.message))
     return
   }
 
-  sdk.log(LOGO)
-  sdk.log(greeting)
+  await ux.print(LOGO)
+  await ux.print(greeting)
 
   // Attempt to retrieve previous auth config and prompt the user if they
   // want to use it or enter new details, use old if we have a runtime job
-  const authData = await retrieveAuth(!!initialJob)
+  const { authData, user } = await retrieveAuth(!!initialJob)
 
   // Extract job names from our jobs mapping
   const jobChoices = Object.keys(jobs)
@@ -62,7 +60,7 @@ async function main() {
     run = shouldContinue
   }
 
-  sdk.log(ux.colors.magenta(`\nSee you later! 👋`))
+  await ux.print(ux.colors.magenta(`👋  Thanks for using Incident.sh! 👋`))
 }
 
 /**

@@ -1,26 +1,46 @@
 const { ux } = require('@cto.ai/sdk')
-const { secondary, reset } = ux.colors
+const moment = require('moment')
+
+const { callOutCyan, secondary } = ux.colors
 
 const newRunPrompts = [
   {
     type: 'input',
     name: 'gitlabToken',
-    message: `Please input your GitLab Access Token ${reset.green('→')}`,
+    message: `Please input your GitLab Access Token`,
   },
   {
     type: 'input',
     name: 'projectId',
-    message: `Please input your GitLab Project Id ${reset.green('→')}`,
+    message: `Please input your GitLab Project Id`,
   },
   {
     type: 'input',
     name: 'slackWebHook',
-    message: `Please input your Slack WebHook URL ${reset.green('→')}`,
+    message: `Please input your Slack WebHook URL`,
   },
   {
     type: 'input',
     name: 'pagerDutyKey',
-    message: `Please input your PagerDuty API Key ${reset.green('→')}`,
+    message: `Please input your PagerDuty API Key`,
+  },
+]
+
+const userPrompts = [
+  {
+    type: 'input',
+    name: 'email',
+    message: 'Please enter your email for PagerDuty',
+  },
+  {
+    type: 'input',
+    name: 'firstName',
+    message: 'Please enter your first name',
+  },
+  {
+    type: 'input',
+    name: 'lastName',
+    message: 'Please enter your last name',
   },
 ]
 
@@ -28,9 +48,7 @@ const useOldAuthPrompt = [
   {
     type: 'confirm',
     name: 'useOld',
-    message: `Would you like to use your previously entered GitLab, Slack, and PagerDuty configuration? ${reset.green(
-      '→'
-    )}`,
+    message: `Would you like to use your previously entered GitLab, Slack, and PagerDuty configuration`,
   },
 ]
 
@@ -39,30 +57,25 @@ const whichJobPrompt = choices => {
     {
       type: 'list',
       name: 'job',
-      message: `What would you like to do? ${reset.green('→')}`,
+      message: `What would you like to do`,
       choices,
     },
   ]
 }
 
+const incidentTitlePrompt = {
+  type: 'input',
+  name: 'description',
+  message: `\n⚠️  Please describe the incident: ${secondary(
+    '(Maximum 255 characters)'
+  )}`,
+}
+
 const incidentStartPrompts = [
-  {
-    type: 'input',
-    name: 'description',
-    message: `\n⚠️  Please describe the incident: ${secondary(
-      '(Maximum 255 characters)'
-    )}`,
-    validate: input => {
-      if (input.length < 255) {
-        return true
-      }
-      return 'There is a 255 character limit!'
-    },
-  },
   {
     type: 'list',
     name: 'impact',
-    message: 'What impact is the incident having?',
+    message: 'What is the impact of this incident',
     choices: [
       '🔥   All customers are affected.',
       '😭   Large segment of customers are affected.',
@@ -72,15 +85,15 @@ const incidentStartPrompts = [
     ],
   },
   {
-    type: 'datepicker',
+    type: 'datetime',
     name: 'started_at',
-    message: 'When did the incident start?',
-    format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
+    message: 'When did the incident start',
+    maximum: new Date(),
   },
   {
     type: 'list',
     name: 'status',
-    message: 'What is the current status to of the incident?',
+    message: 'What is the current phase of the incident',
     choices: [
       '🔍 Investigating',
       '🚨 Identified',
@@ -91,7 +104,7 @@ const incidentStartPrompts = [
   {
     type: 'input',
     name: 'message',
-    message: 'What is the current incident update?',
+    message: 'What is the current incident status',
   },
 ]
 
@@ -99,21 +112,17 @@ const whereToCreatePrompt = [
   {
     type: 'confirm',
     name: 'gitlab',
-    message: `Would you like to create a GitLab issue? ${reset.green('→')}`,
+    message: `Would you like to create a GitLab issue`,
   },
   {
     type: 'confirm',
     name: 'slack',
-    message: `Would you like to send a Slack message to your linked channel? ${reset.green(
-      '→'
-    )}`,
+    message: `Would you like to send a Slack message to your linked channel`,
   },
   {
     type: 'confirm',
     name: 'pagerDuty',
-    message: `Would you like to create a PagerDuty incident? ${reset.green(
-      '→'
-    )}`,
+    message: `Would you like to create a PagerDuty incident`,
   },
 ]
 
@@ -122,9 +131,7 @@ const pagerDutyAssigneePrompt = choices => {
     {
       type: 'list',
       name: 'assignee',
-      message: `Which of PagerDuty user would you like to assign to this incident? ${reset.green(
-        '→'
-      )}`,
+      message: `Which PagerDuty user would you like to assign to this incident`,
       choices,
     },
   ]
@@ -135,9 +142,7 @@ const escalationPolicyPrompt = choices => {
     {
       type: 'list',
       name: 'escalationPolicy',
-      message: `Which PagerDuty escalation policy would you like to use for this incident? ${reset.green(
-        '→'
-      )}`,
+      message: `Which PagerDuty escalation policy would you like to use for this incident`,
       choices,
     },
   ]
@@ -148,9 +153,7 @@ const servicePrompt = choices => {
     {
       type: 'list',
       name: 'service',
-      message: `Which PagerDuty service would you like to use for this incident? ${reset.green(
-        '→'
-      )}`,
+      message: `Which PagerDuty service would you like to use for this incident`,
       choices,
     },
   ]
@@ -161,7 +164,7 @@ const updateSelectPrompt = choices => {
     {
       type: 'list',
       name: 'selected',
-      message: `Which incident would you like to update? ${reset.green('→')}`,
+      message: `Which incident would you like to update`,
       choices,
     },
   ]
@@ -171,7 +174,7 @@ const howUpdatePrompt = [
   {
     type: 'list',
     name: 'updateType',
-    message: `How would you like to update this incident? ${reset.green('→')}`,
+    message: `How would you like to update this incident`,
     choices: [
       'Resolve this incident',
       'Escalate this incident',
@@ -185,94 +188,86 @@ const noteContentsPrompt = [
   {
     type: 'input',
     name: 'content',
-    message: `Please enter your note ${reset.green('→')}`,
+    message: `Please enter your note`,
   },
 ]
 
 const snoozeDurationPrompt = [
   {
-    type: 'datepicker',
+    type: 'datetime',
     name: 'snoozeDuration',
-    message: `Until when would you like to snooze this incident? ${reset.green(
-      '→'
-    )}`,
+    message: `How long would you like to snooze this incident`,
     format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
+    minimum: new Date(),
   },
 ]
 
-const continuePrompts = [
-  {
-    type: 'input',
-    name: 'continue',
-    message: `\nPress enter to continue →`,
-    afterMessage: ' ',
-    transformer: input => ' ',
-  },
-]
-
-const searchIncidentsPrompt = [
-  {
-    type: 'datepicker',
-    name: 'since',
-    message: `What is the start of the date range over which you want to search? ${reset.green(
-      '→'
-    )}`,
-    format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
-  },
-  {
-    type: 'datepicker',
+async function getSearchQuery() {
+  // Datetime prompt does not currently support formatting of the date @ sdk v2.0.1
+  const currentTime = moment().format()
+  const endDatePrompt = {
+    type: 'datetime',
     name: 'until',
-    message: `What is the end of the date range over which you want to search? ${reset.green(
-      '→'
-    )}`,
-    format: ['mm', '/', 'dd', '/', 'yy', ' ', 'hh', ':', 'MM', ' ', 'TT'],
-  },
-  {
-    type: 'checkbox',
-    name: 'statuses',
-    message: `Which statuses would you like to search for? ${reset.green('→')}`,
-    choices: ['triggered', 'acknowledged', 'resolved'],
-  },
-  {
-    type: 'checkbox',
-    name: 'urgencies',
-    message: `Which urgencies would you like to search for? ${reset.green(
-      '→'
-    )}`,
-    choices: ['high', 'low'],
-  },
-]
+    message: `What is the end of the date range over which you want to search`,
+    maximum: currentTime,
+  }
+  const { until } = await ux.prompt(endDatePrompt)
+  const chosenEndDate = moment(until)
+  // PagerDuty getIncident API returns a bad request when date ranges are longer than 179 days from current time
+  const optionPrompts = [
+    {
+      type: 'datetime',
+      name: 'since',
+      message: `What is the start of the date range over which you want to search`,
+      maximum: chosenEndDate.format(),
+      minimum: chosenEndDate
+        .clone()
+        .subtract(179, 'days')
+        .format(),
+    },
+    {
+      type: 'checkbox',
+      name: 'statuses',
+      message: `Which statuses would you like to search for`,
+      choices: ['Triggered', 'Acknowledged', 'Resolved'],
+    },
+    {
+      type: 'checkbox',
+      name: 'urgencies',
+      message: `Which urgencies would you like to search for`,
+      choices: ['High', 'Low'],
+    },
+  ]
+  const query = await ux.prompt(optionPrompts)
+  return { until, ...query }
+}
 
 const shouldContinuePrompt = [
   {
     type: 'confirm',
     name: 'shouldContinue',
-    message: `\nWould you like to perform another task ${reset.green('→')}`,
+    message: `Would you like to perform another task`,
   },
 ]
 
 const escalatePrompt = [
   {
-    type: 'input',
+    type: 'number',
     name: 'level',
-    message: `Please enter the escalation level to promote this incident to ${reset.green(
-      '→'
+    message: `Please enter the escalation level to promote this incident to ${callOutCyan(
+      '(An integer from 1 - 20)'
     )}`,
-    validate: function(input) {
-      const regex = /\d+/g
-      const match = regex.exec(input)
-      if (match) {
-        return true
-      }
-      return 'Please enter an integer'
-    },
+    minimum: 1,
+    maximum: 20,
   },
 ]
 
 module.exports = {
   newRunPrompts,
+  userPrompts,
   useOldAuthPrompt,
   whichJobPrompt,
+  incidentTitlePrompt,
   incidentStartPrompts,
   whereToCreatePrompt,
   pagerDutyAssigneePrompt,
@@ -282,8 +277,7 @@ module.exports = {
   howUpdatePrompt,
   noteContentsPrompt,
   snoozeDurationPrompt,
-  continuePrompts,
-  searchIncidentsPrompt,
+  getSearchQuery,
   shouldContinuePrompt,
   escalatePrompt,
 }

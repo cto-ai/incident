@@ -1,5 +1,7 @@
 const { sdk, ux } = require('@cto.ai/sdk')
+const { handleError } = require('../handlers')
 const pagerDuty = require('node-pagerduty')
+const { magenta, red } = ux.colors
 
 // PagerDuty config variables
 let pd // Main API instance
@@ -23,9 +25,13 @@ function initializePagerDuty(token) {
  * @return {array} A list of all the users
  */
 async function getUsers() {
-  const { body } = await pd.users.listUsers(qs)
-  const { users } = JSON.parse(body)
-  return users
+  try {
+    const { body } = await pd.users.listUsers(qs)
+    const { users } = JSON.parse(body)
+    return users
+  } catch (err) {
+    await handleError(err, 'Failed to retrieve PagerDuty users')
+  }
 }
 
 /**
@@ -53,8 +59,12 @@ async function matchUser(opUserEmail, userList) {
  * @return {array} The list of escalation policies
  */
 async function getEscalationPolicies() {
-  const { body } = await pd.escalationPolicies.listEscalationPolicies(qs)
-  return JSON.parse(body).escalation_policies
+  try {
+    const { body } = await pd.escalationPolicies.listEscalationPolicies(qs)
+    return JSON.parse(body).escalation_policies
+  } catch (err) {
+    await handleError(err, 'Failed to get escalation policies')
+  }
 }
 
 /**
@@ -65,8 +75,12 @@ async function getEscalationPolicies() {
  * @return {object} The found escalation policy
  */
 async function getEscalationPolicy(id) {
-  const { body } = await pd.escalationPolicies.getEscalationPolicy(id, qs)
-  return JSON.parse(body).escalation_policy
+  try {
+    const { body } = await pd.escalationPolicies.getEscalationPolicy(id, qs)
+    return JSON.parse(body).escalation_policy
+  } catch (err) {
+    await handleError(err, `Failed to get details for escalation policy ${id}`)
+  }
 }
 
 /**
@@ -75,8 +89,12 @@ async function getEscalationPolicy(id) {
  * @return {array} The list of services
  */
 async function getServices() {
-  const { body } = await pd.services.listServices(qs)
-  return JSON.parse(body).services
+  try {
+    const { body } = await pd.services.listServices(qs)
+    return JSON.parse(body).services
+  } catch (err) {
+    await handleError(err, 'Failed to get list of services')
+  }
 }
 
 /**
@@ -92,10 +110,14 @@ async function newIncident(user, payload, userList) {
   const { me } = user
   const opUserEmail = me.email
   const from = await matchUser(opUserEmail, userList)
-  const {
-    body: { incident },
-  } = await pd.incidents.createIncident(from[0].email, payload)
-  return incident
+  try {
+    const {
+      body: { incident },
+    } = await pd.incidents.createIncident(from[0].email, payload)
+    return incident
+  } catch (err) {
+    await handleError(err, 'Failed to create the incident')
+  }
 }
 
 /**
@@ -105,42 +127,46 @@ async function newIncident(user, payload, userList) {
  */
 async function getOnCall() {
   // Get on call users
-  ux.spinner.start('Retrieving users on call')
-  const { body } = await pd.onCalls.listAllOnCalls(qs)
-  const onCalls = JSON.parse(body).oncalls
+  await ux.spinner.start('Retrieving users on call')
+  try {
+    const { body } = await pd.onCalls.listAllOnCalls(qs)
+    const onCalls = JSON.parse(body).oncalls
+    // Sort users into their policies
+    const sorted = {}
+    onCalls.map(policy => {
+      // Organize the data from PagerDuty's response
+      const policyName = policy.escalation_policy.summary
+      const { escalation_level, end } = policy
+      const { summary, id } = policy.user
+      const user = {
+        name: summary,
+        escalation_level,
+        id,
+        end,
+      }
 
-  // Sort users into their policies
-  const sorted = {}
-  onCalls.map(policy => {
-    // Organize the data from PagerDuty's response
-    const policyName = policy.escalation_policy.summary
-    const { escalation_level } = policy
-    const { summary, id } = policy.user
-    const user = {
-      name: summary,
-      escalation_level,
-      id,
-    }
-
-    // Add the user to their escalation policy
-    if (sorted[policyName]) {
-      sorted[policyName] = [...sorted[policyName], user]
-    } else {
-      sorted[policyName] = [user]
-    }
-  })
-
-  // Sort users, within the policies, by their escalation level
-  Object.keys(sorted).map(k => {
-    sorted[k] = sorted[k].sort((a, b) => {
-      if (a.escalation_level > b.escalation_level) return 1
-      if (b.escalation_level > a.escalation_level) return -1
-      return 0
+      // Add the user to their escalation policy
+      if (sorted[policyName]) {
+        sorted[policyName] = [...sorted[policyName], user]
+      } else {
+        sorted[policyName] = [user]
+      }
     })
-  })
-  ux.spinner.stop('Done!\n')
 
-  return sorted
+    // Sort users, within the policies, by their escalation level
+    Object.keys(sorted).map(k => {
+      sorted[k] = sorted[k].sort((a, b) => {
+        if (a.escalation_level > b.escalation_level) return 1
+        if (b.escalation_level > a.escalation_level) return -1
+        return 0
+      })
+    })
+    await ux.spinner.stop('✅  Retrieved on call schedule!')
+
+    return sorted
+  } catch (err) {
+    await handleError(err, 'Failed to get users on call.')
+  }
 }
 
 /**
@@ -152,8 +178,12 @@ async function getOnCall() {
  */
 async function getIncidents(q) {
   const query = Object.assign({ ...qs }, q) // Override default query with passed values
-  const { body } = await pd.incidents.listIncidents(query)
-  return JSON.parse(body).incidents
+  try {
+    const { body } = await pd.incidents.listIncidents(query)
+    return JSON.parse(body).incidents
+  } catch (err) {
+    await handleError(err, 'Failed to get incidents')
+  }
 }
 
 /**
@@ -170,11 +200,7 @@ async function updateIncident(id, from, payload) {
     const { body } = await pd.incidents.updateIncident(id, from, payload)
     return body
   } catch (err) {
-    if (`${err}`.includes('Incident Already Resolved')) {
-      sdk.log(ux.colors.magenta('\nIncident already resolved!\n'))
-      return {}
-    }
-    sdk.log(ux.colors.red(`${err}`))
+    await handleError(err, 'Failed to update incident')
   }
 }
 
@@ -192,8 +218,7 @@ async function addNote(id, from, payload) {
     const { body } = await pd.incidents.createNote(id, from, payload)
     return body
   } catch (err) {
-    sdk.log(ux.colors.red(`${err}`))
-    throw err
+    await handleError(err, 'Failed to create an incident note')
   }
 }
 
@@ -211,7 +236,7 @@ async function snoozeIncident(id, from, payload) {
     const { body } = await pd.incidents.snoozeIncident(id, from, payload)
     return body
   } catch (err) {
-    sdk.log(ux.colors.red(`${err}`))
+    await handleError(err, 'Failed to snooze incident')
   }
 }
 

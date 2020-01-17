@@ -1,7 +1,8 @@
-const { ux, sdk } = require('@cto.ai/sdk')
+const { ux } = require('@cto.ai/sdk')
 const moment = require('moment')
 const pd = require('../utils/api/pagerDuty')
 const {
+  incidentTitlePrompt,
   incidentStartPrompts,
   whereToCreatePrompt,
   pagerDutyAssigneePrompt,
@@ -11,13 +12,14 @@ const {
   howUpdatePrompt,
   noteContentsPrompt,
   snoozeDurationPrompt,
-  searchIncidentsPrompt,
+  getSearchQuery,
   escalatePrompt,
 } = require('../prompts')
 const { getUrgency } = require('../utils/helpers')
 const { createGitlabIssue } = require('../utils/api/gitlab')
 const sendSlackMessage = require('../utils/api/slack')
-
+const { blue, callOutCyan, magenta, red } = ux.colors
+const { handleSuccess } = require('../utils/handlers')
 /**
  * createIncident prompts the user for info and creates a PagerDuty incident.
  *
@@ -26,9 +28,15 @@ const sendSlackMessage = require('../utils/api/slack')
  */
 async function createIncident(authData, user) {
   // Get incident info from the user
-  let { description, impact, started_at, status, message } = await ux.prompt(
+  let incidentTitle = await ux.prompt(incidentTitlePrompt)
+  while (incidentTitle.description.length > 255) {
+    await ux.print('Incident title must be less than 255 characters!')
+    incidentTitle = await ux.prompt(incidentTitlePrompt)
+  }
+  let { impact, started_at, status, message } = await ux.prompt(
     incidentStartPrompts
   )
+  let { description } = incidentTitle
 
   // Create our timestamps
   const ts = moment().unix()
@@ -60,10 +68,12 @@ async function createIncident(authData, user) {
 
     if (gitlab) {
       await createGitlabIssue(gitlabToken, projectId, incidentSummary)
+      await handleSuccess('Create GitLab Issue', incidentSummary)
     }
 
     if (slack) {
       await sendSlackMessage(slackWebHook, incidentSummary, user)
+      await handleSuccess('Create Slack Message', incidentSummary)
     }
 
     if (pagerDuty) {
@@ -95,7 +105,7 @@ async function createIncident(authData, user) {
       )
       const serviceId = serviceChoices[service]
 
-      ux.spinner.start('Creating PagerDuty incident')
+      await ux.spinner.start('🏃‍ Creating a new PagerDuty incident')
       // Create the PagerDuty incident
       const incident = await pd.newIncident(user, {
         incident: {
@@ -115,13 +125,12 @@ async function createIncident(authData, user) {
           urgency: getUrgency(impact),
         },
       })
-      ux.spinner.stop('Done!')
-      sdk.log(
-        ux.colors.blue(`You can see the incident at ${incident.html_url}`)
-      )
+      await ux.spinner.stop('🎉 PagerDuty incident created! 🎉')
+      await ux.print(blue(`You can see the incident at ${incident.html_url}`))
+      await handleSuccess('Create PagerDuty incident', incident)
     }
   } catch (err) {
-    console.error(err)
+    await handleError(err, 'Failed to create an incident')
   }
 }
 
@@ -132,73 +141,82 @@ async function createIncident(authData, user) {
  * @param {object} authData The user's entered auth data
  * @param {object} user     The current SDK user
  */
-async function searchIncidents(authData, user) {
+async function searchIncidents(authData) {
   // Init our PD client
   const { pagerDutyKey } = authData
   pd.initializePagerDuty(pagerDutyKey)
 
   // Get query information from the user
-  const query = await ux.prompt(searchIncidentsPrompt)
-
-  sdk.log('')
-  ux.spinner.start('Retrieving incidents')
+  const query = await getSearchQuery()
+  // Prompt returns values in title case for UX readability. API only accepts lowercase values.
+  query.statuses = query.statuses.map(status => status.toLowerCase())
+  query.urgencies = query.urgencies.map(urgency => urgency.toLowerCase())
+  await ux.spinner.start('🏃‍  Retrieving incidents')
   const incidents = await pd.getIncidents(query)
-  ux.spinner.stop('Done!\n')
 
   // Nothing found; return early
   if (!incidents.length) {
-    sdk.log(ux.colors.blue('No incidents found!'))
+    await ux.spinner.stop(magenta('🤷‍  No incidents found!'))
     return incidents
   }
 
-  sdk.log(ux.colors.magenta('\nWe found the following incidents:\n'))
-  incidents.map(printIncident)
+  await ux.spinner.stop('✅  Retrieved incidents!')
+  const titleStr = magenta('\nHere are the retrieved incidents:')
+  const incidentsStr = incidents.map(printIncident)
+  await ux.print(`${titleStr}\n${incidentsStr.join('')}`)
+  await handleSuccess('Search Incidents', query)
 }
 
 /**
  * printIncident pretty prints an incident.
  */
 function printIncident(incident) {
-  sdk.log(`\t${incident.title}`)
-  sdk.log(`\t\tStatus: ${incident.status}`)
-  sdk.log(`\t\tService: ${incident.service.summary}`)
-  sdk.log(`\t\tEscalation Policy: ${incident.escalation_policy.summary}`)
-  sdk.log(`\t\tUrgency: ${incident.urgency}`)
-  sdk.log(`\t\tCreated at: ${incident.created_at}`)
-  sdk.log(`\t\tLast modified: ${incident.last_status_change_at}`)
+  let incidentStr = `\n\t${incident.title}
+  \t\tStatus: ${incident.status}
+  \t\tService: ${incident.service.summary}
+  \t\tEscalation Policy: ${incident.escalation_policy.summary}
+  \t\tUrgency: ${incident.urgency}
+  \t\tCreated at: ${incident.created_at}
+  \t\tLast modified: ${incident.last_status_change_at}`
   if (incident.assignments.length) {
-    sdk.log(`\t\tPeople assigned:`)
-    incident.assignments.map(assignee => {
-      sdk.log(`\t\t\t${asignee.summary}`)
+    incidentStr += `\n\t\tPeople assigned:`
+    incident.assignments.map(async assignee => {
+      incidentStr += `\n\t\t\t${assignee.summary}`
     })
   }
-  sdk.log(`\t\tLink: ${incident.html_url}`)
+  incidentStr += `\n\t\tLink: ${incident.html_url}\n`
+  return incidentStr
 }
 
 /**
  * whoOnCall retrieves users on call with PagerDuty and prints them out
  *
  * @param {object} authData The user's entered auth data
- * @param {object} user     The current SDK user
  */
-async function whoOnCall(authData, user) {
+async function whoOnCall(authData) {
   // Init our PD client
   const { pagerDutyKey } = authData
   pd.initializePagerDuty(pagerDutyKey)
 
   // Pretty print the on call users for each policy
+  // Concatenated strings before printing for ux.print
   const onCalls = await pd.getOnCall()
-  Object.keys(onCalls).map(policy => {
-    sdk.log(
-      ux.colors.magenta(
-        `The following people are on call for the '${policy}' policy:\n\n`
-      )
+  Object.keys(onCalls).forEach(async policy => {
+    const policyTitle = magenta(
+      `\nThe following people are on call for the '${policy}' policy:\n`
     )
-    onCalls[policy].map(person => {
-      sdk.log(`\t${person.name}:`)
-      sdk.log(`\t\tID: ${person.id}`)
-      sdk.log(`\t\tEscalation Level: ${person.escalation_level}\n\n`)
+    const policyDetails = onCalls[policy].map(person => {
+      let personStr = `\n\t${person.name} - Escalation Level: ${person.escalation_level}`
+      if (person.end) {
+        const endingTime = new Date(person.end)
+        const formattedTimeStamp = endingTime.toUTCString()
+        personStr += `\n\t${callOutCyan(
+          `Rotational on-call ending on: ${formattedTimeStamp}`
+        )}`
+      }
+      return personStr
     })
+    await ux.print(`${policyTitle}${policyDetails.join('')}`)
   })
 }
 
@@ -212,11 +230,8 @@ async function updateIncident(authData, user) {
     statuses: ['triggered', 'acknowledged'],
   }
 
-  sdk.log('')
-  ux.spinner.start('Retrieving incident list')
+  await ux.spinner.start('🏃 Retrieving incident list')
   const incidents = await pd.getIncidents(query)
-  ux.spinner.stop('Done!')
-  sdk.log('')
 
   // Map incident titles to their ids
   const choicesMap = {}
@@ -225,9 +240,12 @@ async function updateIncident(authData, user) {
   })
   const choices = Object.keys(choicesMap)
   if (!choices.length) {
-    sdk.log('There are no incidents available to be updated!')
+    await ux.spinner.stop(
+      '🤷‍  There are no incidents available to be updated!'
+    )
     return
   }
+  await ux.spinner.stop('✅  Retrieved incident list!')
 
   // Get user to select an incident/update type and setup config values
   const { selected } = await ux.prompt(updateSelectPrompt(choices))
@@ -251,7 +269,7 @@ async function updateIncident(authData, user) {
       await snoozeIncident(incidentId, email)
       break
     default:
-      sdk.log(ux.colors.red('Invalid option selected!'))
+      await ux.print(red('Invalid option selected!'))
   }
 }
 
@@ -269,9 +287,9 @@ async function resolveIncident(incidentId, email) {
     },
   }
 
-  ux.spinner.start(`Resolving incident ${incidentId}`)
+  await ux.spinner.start(`♻️  Resolving incident ${incidentId}`)
   await pd.updateIncident(incidentId, email, resolvePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop(`✅  Indicent ${incidentId} has been resolved!`)
 }
 
 /**
@@ -281,17 +299,21 @@ async function resolveIncident(incidentId, email) {
  * @param {string} email      The current user's email
  */
 async function escalateIncident(incidentId, email) {
-  const { level } = await ux.prompt(escalatePrompt)
+  const chosenLevel = await ux.prompt(escalatePrompt)
   const escalatePayload = {
     incident: {
       type: 'incident_reference',
-      escalation_level: level,
+      escalation_level: chosenLevel.level,
     },
   }
 
-  ux.spinner.start(`Escalating incident ${incidentId} to level ${level}`)
+  await ux.spinner.start(
+    `⬆️  Escalating incident ${incidentId} to level ${chosenLevel.level}`
+  )
   await pd.updateIncident(incidentId, email, escalatePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop(
+    `✅  Incident ${incidentId} has been escalated to level ${chosenLevel.level}`
+  )
 }
 
 /**
@@ -308,9 +330,9 @@ async function addNote(incidentId, email) {
     },
   }
 
-  ux.spinner.start(`Adding note to incident ${incidentId}`)
+  await ux.spinner.start(`🏃  Adding note to incident ${incidentId}`)
   await pd.addNote(incidentId, email, notePayload)
-  ux.spinner.stop('Done!')
+  await ux.spinner.stop(`✅  Note has been added to incident ${incidentId}!`)
 }
 
 /**
@@ -325,9 +347,9 @@ async function snoozeIncident(incidentId, email) {
     (new Date(snoozeDuration).getTime() - new Date().getTime()) / 1000
   )
 
-  ux.spinner.start(`Snoozing incident ${incidentId}`)
+  ux.spinner.start(`😴  Snoozing incident ${incidentId}`)
   await pd.snoozeIncident(incidentId, email, { duration })
-  ux.spinner.stop('Done!')
+  ux.spinner.stop('✅  Incident has been snoozed!')
 }
 
 module.exports = {
