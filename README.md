@@ -1,4 +1,6 @@
-# 🚀 CTO.ai - Official Op - Incident 🚀
+![](https://raw.githubusercontent.com/cto-ai/incident/master/assets/banner.png)
+
+# Incident 🚀
 
 An Op to simplify incident management.
 
@@ -47,6 +49,6 @@ Please reach feel free to create an issue to request additional integrations or 
 
 To develop and run ops locally
 
-  1. Clone the repo `git clone <git url>`
-  2. `cd` into the directory and install dependancies with `npm install`
-  3. Run the Op from your local source code with `ops run path/to/op`
+1. Clone the repo `git clone <git url>`
+2. `cd` into the directory and install dependancies with `npm install`
+3. Run the Op from your local source code with `ops run path/to/op`
