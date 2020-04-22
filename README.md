@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/cto-ai/incident/master/assets/banner.png)
+![](https://cto.ai/static/oss-banner.png)
 
 # Incident 🚀
 
